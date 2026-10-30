@@ -1,0 +1,1052 @@
+<title>Calculateur de cote ITRA</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  /* Layout: outils à gauche, dossard-résultat collant à droite ; une colonne sur téléphone. */
+  :root {
+    --bg: #eef0ec;
+    --surface: #f8f9f6;
+    --fg: #1d2620;
+    --muted: #5d6a61;
+    --line: #cfd6cf;
+    --accent: #c23a2b;
+    --accent-soft: #f3dcd7;
+    --safe: #2f6b45;
+    --safe-soft: #dcebe0;
+    --warn: #9a6512;
+    --warn-soft: #f4e6cc;
+    --bib-bg: #fbfaf6;
+    --bib-fg: #18201b;
+    --bib-line: #d9d6cc;
+    --focus: #1f5fbf;
+    --font-display: "Big Shoulders Display", "Arial Narrow", "Roboto Condensed", sans-serif;
+    --font-body: "Public Sans", "Segoe UI", system-ui, sans-serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #141a16; --surface: #1b231e; --fg: #e6ebe6; --muted: #9caaa0; --line: #2f3a33;
+      --accent: #ec6a58; --accent-soft: #3d2420; --safe: #7cc595; --safe-soft: #1f3327;
+      --warn: #e2ac57; --warn-soft: #3a2e19; --bib-bg: #e9e6dc; --bib-fg: #18201b; --bib-line: #c9c4b6;
+      --focus: #7fb0ff; color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #141a16; --surface: #1b231e; --fg: #e6ebe6; --muted: #9caaa0; --line: #2f3a33;
+    --accent: #ec6a58; --accent-soft: #3d2420; --safe: #7cc595; --safe-soft: #1f3327;
+    --warn: #e2ac57; --warn-soft: #3a2e19; --bib-bg: #e9e6dc; --bib-fg: #18201b; --bib-line: #c9c4b6;
+    --focus: #7fb0ff; color-scheme: dark;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--font-body);
+    font-size: 15px;
+    line-height: 1.5;
+  }
+  .page {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding-block: 28px 56px;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    display: grid;
+    gap: 28px;
+  }
+  header { display: grid; gap: 6px; max-width: 68ch; }
+  .eyebrow {
+    font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--accent);
+  }
+  h1 {
+    font-family: var(--font-display); font-weight: 800; font-size: clamp(40px, 7vw, 64px);
+    line-height: .95; letter-spacing: .01em; margin: 0; text-wrap: balance;
+  }
+  .lede { margin: 0; color: var(--muted); font-size: 16px; }
+
+  .layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 420px); gap: 28px; align-items: start; }
+  @media (max-width: 860px) { .layout { grid-template-columns: minmax(0, 1fr); } }
+
+  .panel { display: grid; gap: 22px; min-width: 0; }
+  fieldset { border: 0; margin: 0; padding: 0; display: grid; gap: 12px; min-width: 0; }
+  legend {
+    font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted);
+    padding: 0 0 4px; display: flex; gap: 8px; align-items: baseline;
+  }
+  legend .step { font-family: var(--font-mono); color: var(--accent); letter-spacing: 0; }
+  .group { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; display: grid; gap: 12px; }
+  .row { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; }
+  label { display: grid; gap: 4px; font-size: 13px; font-weight: 600; min-width: 0; }
+  label .hint { font-weight: 400; color: var(--muted); font-size: 12px; }
+  input, select, textarea {
+    font: inherit; font-weight: 500; color: var(--fg); background: var(--bg);
+    border: 1px solid var(--line); border-radius: 7px; padding: 9px 10px; width: 100%; box-sizing: border-box; min-width: 0;
+  }
+  textarea { resize: vertical; font-family: var(--font-mono); font-size: 13px; line-height: 1.6; }
+  textarea:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+  input[type="range"] { padding: 0; border: 0; background: transparent; accent-color: var(--accent); }
+  .num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+  input:focus-visible, select:focus-visible, button:focus-visible, summary:focus-visible {
+    outline: 2px solid var(--focus); outline-offset: 2px;
+  }
+  .score-pick { display: grid; grid-template-columns: minmax(0, 1fr) 96px; gap: 14px; align-items: center; }
+  .presets { display: flex; flex-wrap: wrap; gap: 8px; }
+  .presets button {
+    font: inherit; font-size: 13px; font-weight: 600; font-family: var(--font-mono);
+    border: 1px solid var(--line); background: var(--bg); color: var(--fg); border-radius: 999px; padding: 4px 12px; cursor: pointer;
+  }
+  .presets button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--bib-bg); }
+
+  .chip { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; border-radius: 999px; padding: 3px 10px; width: fit-content; }
+  .chip.same { background: var(--safe-soft); color: var(--safe); }
+  .chip.changed { background: var(--warn-soft); color: var(--warn); }
+  .chip::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+
+  details.derive { border-top: 1px dashed var(--line); padding-top: 10px; }
+  details.derive summary { cursor: pointer; font-size: 13px; font-weight: 600; color: var(--accent); }
+  details.derive .inner { display: grid; gap: 10px; padding-top: 10px; }
+  .derived { font-size: 13px; color: var(--muted); }
+
+  /* Dossard */
+  .bib-wrap { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 16px); display: grid; gap: 16px; min-width: 0; }
+  @media (max-width: 860px) { .bib-wrap { position: static; order: -1; } }
+  .bib {
+    position: relative; background: var(--bib-bg); color: var(--bib-fg); border-radius: 6px;
+    border: 1px solid var(--bib-line); padding: 26px 24px 20px; display: grid; gap: 14px;
+    box-shadow: 0 1px 0 var(--bib-line), 0 14px 30px -18px rgba(0, 0, 0, .45);
+  }
+  .bib .pin { position: absolute; width: 9px; height: 9px; border-radius: 50%; background: var(--bg); border: 1px solid var(--bib-line); }
+  .bib .pin.tl { top: 9px; left: 9px; } .bib .pin.tr { top: 9px; right: 9px; }
+  .bib .pin.bl { bottom: 9px; left: 9px; } .bib .pin.br { bottom: 9px; right: 9px; }
+  .balise { display: grid; gap: 3px; width: 46px; }
+  .balise span { height: 6px; border-radius: 1px; }
+  .balise span:first-child { background: var(--bib-bg); border: 1px solid var(--bib-line); }
+  .balise span:last-child { background: #c23a2b; }
+  .bib-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+  .bib-race { font-family: var(--font-display); font-weight: 700; font-size: 22px; line-height: 1.05; text-transform: uppercase; letter-spacing: .02em; text-wrap: balance; }
+  .bib-course { font-family: var(--font-mono); font-size: 12px; color: #5b6359; }
+  .bib-target { display: grid; gap: 2px; }
+  .bib-target .k { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #2f6b45; }
+  .bib-time {
+    font-family: var(--font-display); font-weight: 800; font-size: clamp(64px, 14vw, 88px); line-height: .9;
+    font-variant-numeric: tabular-nums; letter-spacing: .01em;
+  }
+  .bib-score { font-family: var(--font-mono); font-size: 13px; color: #5b6359; }
+  .bib-alts { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border-top: 1px solid var(--bib-line); }
+  .bib-alts div { padding: 10px 0 0; display: grid; gap: 2px; }
+  .bib-alts div + div { border-left: 1px solid var(--bib-line); padding-left: 14px; }
+  .bib-alts .k { font-size: 11px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: #5b6359; }
+  .bib-alts .v { font-family: var(--font-mono); font-size: 20px; font-weight: 500; font-variant-numeric: tabular-nums; }
+  .bib-foot { font-size: 12.5px; color: #3e463f; display: grid; gap: 4px; border-top: 1px solid var(--bib-line); padding-top: 10px; }
+  .bib-foot strong { font-family: var(--font-mono); font-weight: 500; }
+
+  .note { font-size: 13px; border-radius: 8px; padding: 10px 12px; background: var(--warn-soft); color: var(--fg); }
+  .note b { color: var(--warn); }
+
+  .ladder-box { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+  table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+  caption { text-align: left; font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); padding: 12px 14px 4px; }
+  th, td { padding: 7px 14px; text-align: right; white-space: nowrap; font-size: 13.5px; }
+  th:first-child, td:first-child { text-align: left; }
+  thead th { font-size: 11.5px; font-weight: 600; color: var(--muted); border-bottom: 1px solid var(--line); }
+  td { font-family: var(--font-mono); }
+  tbody tr + tr td { border-top: 1px solid var(--line); }
+  tr.is-target td { background: var(--accent-soft); font-weight: 500; }
+  tr.is-target td:first-child { color: var(--accent); }
+
+  .method { display: grid; gap: 14px; max-width: 72ch; }
+  .method h2 { font-family: var(--font-display); font-weight: 700; font-size: 30px; margin: 0; letter-spacing: .01em; }
+  .method p { margin: 0; }
+  .formula { font-family: var(--font-mono); font-size: 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; overflow-x: auto; }
+  .accuracy { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+  .accuracy div { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; display: grid; gap: 4px; }
+  .accuracy .k { font-size: 12px; font-weight: 600; color: var(--muted); }
+  .accuracy .v { font-family: var(--font-mono); font-size: 22px; font-weight: 500; }
+  .fine { font-size: 12.5px; color: var(--muted); }
+
+  .tabs { display: flex; flex-wrap: wrap; gap: 4px; border-bottom: 1px solid var(--line); }
+  .tabs button {
+    font: inherit; font-size: 15px; font-weight: 600; color: var(--muted); background: transparent; border: 0;
+    border-bottom: 3px solid transparent; margin-bottom: -1px; padding: 8px 14px; cursor: pointer;
+  }
+  .tabs button[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--accent); }
+  .view { display: grid; gap: 28px; min-width: 0; }
+  .action {
+    font: inherit; font-size: 13px; font-weight: 600; background: #c23a2b; color: #fbfaf6; border: 0;
+    border-radius: 7px; padding: 7px 12px; cursor: pointer; width: fit-content;
+  }
+  .delta-up { color: #2f6b45; } .delta-down { color: #c23a2b; }
+  td.used { color: var(--fg); } td.unused { color: var(--muted); }
+  tr.dropped td { color: var(--muted); text-decoration: line-through; }
+
+  .pf-headline { font-family: var(--font-display); font-weight: 800; font-size: clamp(30px, 6vw, 40px); line-height: 1; text-wrap: balance; }
+  .pf-sub { font-size: 14px; color: #3e463f; }
+  .bars { display: grid; gap: 10px; }
+  .bars h3 { margin: 0; font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  .bar-row { display: grid; grid-template-columns: 124px minmax(0, 1fr) 76px; gap: 10px; align-items: center; font-size: 13px; }
+  .bar-label { display: grid; line-height: 1.2; }
+  .bar-label small { color: var(--muted); font-size: 11.5px; }
+  .bar-track { position: relative; height: 14px; background: var(--bg); border: 1px solid var(--line); border-radius: 4px; }
+  .bar-track::before { content: ""; position: absolute; left: 50%; top: -4px; bottom: -4px; width: 1px; background: var(--muted); }
+  .bar-fill { position: absolute; top: 2px; bottom: 2px; border-radius: 3px; }
+  .bar-fill.pos { left: 50%; background: var(--safe); }
+  .bar-fill.neg { right: 50%; background: var(--accent); }
+  .bar-val { font-family: var(--font-mono); font-variant-numeric: tabular-nums; text-align: right; }
+  .bar-val small { display: block; color: var(--muted); font-size: 11px; }
+  .bar-row.empty { color: var(--muted); }
+  @media (prefers-reduced-motion: no-preference) { .bib-time { transition: color .2s; } }
+</style>
+
+<div class="page">
+  <header>
+    <span class="eyebrow">Outil indépendant, sans lien avec ITRA</span>
+    <h1>Calculateur de cote ITRA</h1>
+    <p class="lede">Le chrono à battre pour un score de course ITRA, et ce que ta prochaine course fera à ta cote.</p>
+  </header>
+
+  <nav class="tabs" role="tablist" aria-label="Outils">
+    <button type="button" role="tab" id="tab-chrono" aria-controls="view-chrono" aria-selected="true" data-view="chrono">Chrono à viser</button>
+    <button type="button" role="tab" id="tab-cote" aria-controls="view-cote" aria-selected="false" data-view="cote">Simulateur de cote</button>
+    <button type="button" role="tab" id="tab-profil" aria-controls="view-profil" aria-selected="false" data-view="profil">Mon profil</button>
+  </nav>
+
+  <div class="view" id="view-chrono" role="tabpanel" aria-labelledby="tab-chrono">
+  <div class="layout">
+    <form class="panel" id="form" autocomplete="off">
+      <fieldset>
+        <legend><span class="step">1</span> Course</legend>
+        <div class="group">
+          <label for="race">Course
+            <select id="race"></select>
+          </label>
+          <span class="fine" id="race-note"></span>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend><span class="step">2</span> L'an dernier</legend>
+        <div class="group">
+          <div class="row">
+            <label for="known-time">Ton temps <span class="hint">ou celui d'un finisher, h:mm:ss</span>
+              <input id="known-time" class="num" type="text" placeholder="5:53:47" inputmode="numeric">
+            </label>
+            <label for="known-score">Score de course obtenu
+              <input id="known-score" class="num" type="number" min="1" max="1000" step="1" placeholder="626" inputmode="numeric">
+            </label>
+          </div>
+          <div class="row">
+            <label for="last-dist">Distance <span class="hint">km</span>
+              <input id="last-dist" class="num" type="number" step="0.01" min="1" inputmode="decimal">
+            </label>
+            <label for="last-gain">D+ <span class="hint">m</span>
+              <input id="last-gain" class="num" type="number" step="1" min="0" inputmode="numeric">
+            </label>
+          </div>
+          <span class="derived" id="derived"></span>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend><span class="step">3</span> Prochaine édition</legend>
+        <div class="group">
+          <div class="row">
+            <label for="next-dist">Distance annoncée <span class="hint">km, site de la course</span>
+              <input id="next-dist" class="num" type="number" step="0.01" min="1" inputmode="decimal">
+            </label>
+            <label for="next-gain">D+ annoncé <span class="hint">m</span>
+              <input id="next-gain" class="num" type="number" step="1" min="0" inputmode="numeric">
+            </label>
+          </div>
+          <span class="chip same" id="course-chip">Parcours identique</span>
+          <div class="row">
+            <label for="start">Heure de départ <span class="hint">facultatif, hh:mm</span>
+              <input id="start" class="num" type="text" placeholder="08:00" inputmode="numeric">
+            </label>
+          </div>
+          <label for="checkpoints">Points de passage <span class="hint">un par ligne : nom ; km ; D+ cumulé (le D+ est facultatif)</span>
+            <textarea id="checkpoints" rows="5" placeholder="Ravito 1 ; 14.7 ; 325"></textarea>
+          </label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend><span class="step">4</span> Objectif</legend>
+        <div class="group">
+          <div class="score-pick">
+            <label for="score-range">Score de course visé
+              <input id="score-range" type="range" min="300" max="950" step="1">
+            </label>
+            <label for="score">Points
+              <input id="score" class="num" type="number" min="100" max="1000" step="1" inputmode="numeric">
+            </label>
+          </div>
+          <div class="presets" id="presets" role="group" aria-label="Scores courants">
+            <button type="button" data-score="500">500</button>
+            <button type="button" data-score="600">600</button>
+            <button type="button" data-score="650">650</button>
+            <button type="button" data-score="700">700</button>
+            <button type="button" data-score="750">750</button>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend><span class="step">5</span> Météo <span class="hint" style="text-transform:none;letter-spacing:0;font-weight:400">facultatif</span></legend>
+        <div class="group">
+          <label for="heat">Température max prévue, par rapport à la dernière édition <span class="hint">°C (+3 = plus chaud)</span>
+            <input id="heat" class="num" type="number" step="0.5" min="-20" max="20" inputmode="decimal">
+          </label>
+        </div>
+      </fieldset>
+    </form>
+
+    <div class="bib-wrap">
+      <article class="bib" aria-live="polite">
+        <span class="pin tl"></span><span class="pin tr"></span><span class="pin bl"></span><span class="pin br"></span>
+        <div class="bib-head">
+          <div>
+            <div class="bib-race" id="bib-race">Course</div>
+            <div class="bib-course" id="bib-course"></div>
+          </div>
+          <div class="balise" aria-hidden="true"><span></span><span></span></div>
+        </div>
+        <div class="bib-target">
+          <span class="k">Chrono à viser</span>
+          <span class="bib-time" id="t-safe">–</span>
+          <span class="bib-score" id="t-pace"></span>
+          <span class="bib-score" id="bib-score"></span>
+        </div>
+        <div class="bib-alts">
+          <div><span class="k">Fiabilité</span><span class="v" id="t-reliability">–</span></div>
+          <div><span class="k">Marge incluse</span><span class="v" id="t-margin">–</span></div>
+        </div>
+        <div class="bib-foot">
+          <span id="t-explain"></span>
+          <span id="method"></span>
+        </div>
+      </article>
+      <p class="note" id="heat-note" hidden></p>
+      <div class="ladder-box" id="plan-box" hidden>
+        <table>
+          <caption id="plan-caption">Plan de passage</caption>
+          <thead><tr><th scope="col">Point</th><th scope="col">km</th><th scope="col">Temps</th><th scope="col">Heure</th></tr></thead>
+          <tbody id="plan"></tbody>
+        </table>
+      </div>
+      <div class="ladder-box">
+        <table>
+          <caption>Échelle des scores</caption>
+          <thead><tr><th scope="col">Score</th><th scope="col">Chrono à viser</th><th scope="col">Allure</th></tr></thead>
+          <tbody id="ladder"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <section class="method">
+    <h2>Comment c'est calculé</h2>
+    <p>ITRA donne à chaque finisher le même calcul : le score est 1000 fois le temps de référence de l'édition divisé par ton temps, arrondi à l'entier inférieur. Le temps de référence (T_ref), c'est le chrono qui vaudrait 1000 points ce jour-là. Pour un score visé S, il faut donc courir en moins de 1000 × T_ref / S.</p>
+    <div class="formula">score = ⌊ 1000 × T_ref / temps ⌋ &nbsp;⇒&nbsp; temps max = 1000 × T_ref / S</div>
+    <p>Tout l'enjeu est de prévoir T_ref avant la course. Sur 72 paires d'éditions analysées (UTMB, CCC, OCC, TDS, MCC 2021-2026, courses locales 2024-2026, environ 50 000 résultats), deux cas se dégagent :</p>
+    <div class="accuracy">
+      <div><span class="k">Parcours déclaré identique : T_ref reporté (−0,3 %)</span><span class="v">±0,23 %</span><span class="fine">erreur médiane ; 7 éditions sur 8 dans ±1,2 %</span></div>
+      <div><span class="k">Parcours modifié : T_ref × (km-effort nouveau / ancien)^1,27</span><span class="v">±1,5 %</span><span class="fine">erreur médiane ; 21 éditions sur 26 dans ±3,5 %</span></div>
+    </div>
+    <p>Le chrono à viser inclut une marge de sécurité, au cas où ITRA serait plus sévère que prévu : 1 % si le parcours n'a pas changé, 3,3 % s'il a changé. Sur les éditions testées, ITRA n'a été plus sévère que cette marge qu'une fois sur 8 avec un parcours inchangé, et 3 fois sur 29 avec un parcours modifié. Le km-effort vaut distance + D+/100.</p>
+    <p>La météo n'entre pas dans le calcul d'ITRA. Quand le parcours déclaré ne change pas, ITRA ne baisse pas la barre même si tout le peloton ralentit : par forte chaleur, il faut le même chrono que par temps frais, alors qu'on perd environ 0,5 % de temps par degré. Quand le parcours change, ITRA baisse la barre d'environ la moitié du ralentissement.</p>
+    <p>Le plan de passage répartit le temps visé selon la part du parcours accomplie, en comptant 55 m de D+ comme 1 km et en tenant compte de la fatigue : part du temps = (part de « km + D+/55 »)^1,134. Ce modèle a été ajusté sur les passages LiveTrail de 7 456 finishers de la Veni Vici 2025 ; il se trompe en moyenne de 1,3 point de pourcentage, soit environ 4 minutes sur 5 heures.</p>
+    <p class="fine">Les temps de référence intégrés ont été reconstitués à partir des résultats publiés ; le D+ 2026 de la Veni Vici vient de l'organisateur et peut différer de celui qu'ITRA retiendra. Un recalcul fort d'ITRA reste possible (OCC 2023 : −10 %). Outil indépendant, sans lien avec ITRA.</p>
+  </section>
+  </div>
+
+  <div class="view" id="view-cote" role="tabpanel" aria-labelledby="tab-cote" hidden>
+    <div class="layout">
+      <form class="panel" id="cote-form" autocomplete="off">
+        <fieldset>
+          <legend><span class="step">1</span> Tes résultats</legend>
+          <div class="group">
+            <label for="results">Un résultat par ligne : date ; score ; nom ; km ; D+ <span class="hint">AAAA-MM-JJ, abandons exclus ; km et D+ servent au profil coureur</span>
+              <textarea id="results" rows="12"></textarea>
+            </label>
+            <span class="fine">Prérempli avec tes résultats ITRA au 30 octobre 2026, jour où ta cote publiée était 655.</span>
+            <label for="as-of">Cote calculée au
+              <input id="as-of" class="num" type="date">
+            </label>
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend><span class="step">2</span> Prochaine course</legend>
+          <div class="group">
+            <div class="row">
+              <label for="sim-date">Date
+                <input id="sim-date" class="num" type="date">
+              </label>
+              <label for="sim-score">Score de course espéré
+                <input id="sim-score" class="num" type="number" min="1" max="1000" step="1" inputmode="numeric">
+              </label>
+            </div>
+            <div class="row">
+              <label for="pi-goal">Cote visée
+                <input id="pi-goal" class="num" type="number" min="100" max="1000" step="1" inputmode="numeric">
+              </label>
+            </div>
+          </div>
+        </fieldset>
+      </form>
+
+      <div class="bib-wrap">
+        <article class="bib" aria-live="polite">
+          <span class="pin tl"></span><span class="pin tr"></span><span class="pin bl"></span><span class="pin br"></span>
+          <div class="bib-head">
+            <div>
+              <div class="bib-race">Cote ITRA générale</div>
+              <div class="bib-course" id="pi-asof"></div>
+            </div>
+            <div class="balise" aria-hidden="true"><span></span><span></span></div>
+          </div>
+          <div class="bib-target">
+            <span class="k">Aujourd'hui</span>
+            <span class="bib-time" id="pi-now">–</span>
+            <span class="bib-score" id="pi-scenario"></span>
+          </div>
+          <div class="bib-alts">
+            <div><span class="k">Après ta course</span><span class="v" id="pi-after">–</span></div>
+            <div><span class="k">Score mini pour monter</span><span class="v" id="pi-min">–</span></div>
+          </div>
+          <div class="bib-foot">
+            <span id="pi-goal-text"></span>
+            <button type="button" class="action" id="pi-goal-use" hidden>Calculer le chrono pour ce score</button>
+          </div>
+        </article>
+        <div class="ladder-box">
+          <table>
+            <caption>Ce qui compte dans ta cote</caption>
+            <thead><tr><th scope="col">Course</th><th scope="col">Score</th><th scope="col">Poids</th><th scope="col">Pondéré</th></tr></thead>
+            <tbody id="pi-used"></tbody>
+          </table>
+        </div>
+        <div class="ladder-box">
+          <table>
+            <caption>Baisses à venir sans nouvelle course</caption>
+            <thead><tr><th scope="col">Date</th><th scope="col">Pourquoi</th><th scope="col">Cote</th></tr></thead>
+            <tbody id="pi-drops"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <section class="method">
+      <h2>Comment ta cote est calculée</h2>
+      <p>ITRA garde tes scores des 36 derniers mois, sans les abandons. Chaque score perd un peu de poids avec l'âge : plein poids jusqu'à 11 mois, puis 0,995 de 12 à 17 mois, 0,990 de 18 à 23, 0,985 de 24 à 29 et 0,980 de 30 à 35. Au-delà, il ne compte plus.</p>
+      <p>Avec les 5 meilleurs scores pondérés, ITRA calcule cinq scénarios et garde le plus favorable : ta meilleure course seule à 0,97, tes deux meilleures (0,99 et 0,98), tes trois (1,00 ; 0,99 ; 0,99), tes quatre (1,01 ; 1,00 ; 1,00 ; 0,99), tes cinq (1,02 ; 1,01 ; 1,00 ; 1,00 ; 0,99). Chaque scénario est une moyenne : la somme des scores pondérés divisée par le nombre de courses. La cote est arrondie à l'entier inférieur.</p>
+      <div class="formula">cote = ⌊ max sur n de ( Σ poids_expérience × poids_âge × score ) / n ⌋</div>
+      <p>Ce calcul redonne au point près les quatre cotes publiées sur ta fiche le 30 octobre 2026 : générale 655, semi-marathon 655, marathon 501 et 50K 616. Les cotes par catégorie suivent la même formule avec les seules courses de la catégorie ; seule la cote générale est simulée ici.</p>
+    </section>
+  </div>
+
+  <div class="view" id="view-profil" role="tabpanel" aria-labelledby="tab-profil" hidden>
+    <div class="layout">
+      <div class="panel">
+        <fieldset>
+          <legend><span class="step">1</span> Tes résultats</legend>
+          <div class="group">
+            <span class="fine" id="pf-source"></span>
+            <button type="button" class="action" id="pf-edit">Modifier mes résultats</button>
+            <span class="fine">Le profil porte sur tes 12 derniers mois, période où ton niveau a peu bougé. Plus loin, ta progression fausserait tout : une course de l'an dernier paraîtrait faible simplement parce que tu étais moins fort.</span>
+          </div>
+        </fieldset>
+        <div class="ladder-box">
+          <table>
+            <caption>Courses analysées</caption>
+            <thead><tr><th scope="col">Course</th><th scope="col">Score</th><th scope="col">Terrain</th><th scope="col">Format</th></tr></thead>
+            <tbody id="pf-table"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="bib-wrap">
+        <article class="bib" aria-live="polite">
+          <span class="pin tl"></span><span class="pin tr"></span><span class="pin bl"></span><span class="pin br"></span>
+          <div class="bib-head">
+            <div>
+              <div class="bib-race">Profil coureur</div>
+              <div class="bib-course" id="pf-period"></div>
+            </div>
+            <div class="balise" aria-hidden="true"><span></span><span></span></div>
+          </div>
+          <div class="bib-target">
+            <span class="k">En résumé</span>
+            <span class="pf-headline" id="pf-headline">–</span>
+            <span class="pf-sub" id="pf-sub"></span>
+          </div>
+          <div class="bib-alts">
+            <div><span class="k">Niveau récent</span><span class="v" id="pf-level">–</span></div>
+            <div><span class="k">Progression</span><span class="v" id="pf-progress">–</span></div>
+          </div>
+          <div class="bib-foot">
+            <span id="pf-regularity"></span>
+            <span id="pf-advice"></span>
+          </div>
+        </article>
+        <div class="group bars" id="pf-terrain"></div>
+        <div class="group bars" id="pf-format"></div>
+      </div>
+    </div>
+
+    <section class="panel">
+      <div class="ladder-box">
+        <table>
+          <caption id="sc-caption">Les courses qui te conviennent</caption>
+          <thead><tr><th scope="col">Course</th><th scope="col">Terrain · format</th><th scope="col">Score probable</th><th scope="col">Chrono probable</th><th scope="col"><span class="fine">Préparer</span></th></tr></thead>
+          <tbody id="sc-table"></tbody>
+        </table>
+      </div>
+      <div class="group">
+        <label for="sc-extra">Ajouter des courses à comparer <span class="hint">une par ligne : nom ; km ; D+ ; un temps de l'an dernier ; son score</span>
+          <textarea id="sc-extra" rows="3" placeholder="Trail des Glazicks ; 42 ; 1300 ; 4:31:00 ; 612"></textarea>
+        </label>
+      </div>
+    </section>
+
+    <section class="method">
+      <h2>Comment ton profil est calculé</h2>
+      <p>Les mêmes seuils s'appliquent à tous les coureurs. Le terrain se mesure en mètres de D+ par kilomètre. Montagne à partir de 50 m/km, soit une pente moyenne de 5 % : c'est le seuil de la course en montagne dans les règles de l'IAAF. Roulant sous 30 m/km, une convention puisqu'aucune règle officielle ne le définit ; vallonné entre les deux. Le format suit les catégories de distance d'ITRA, en kilomètres : court jusqu'au semi (moins de 35 km), moyen pour le marathon et le 50K (35 à 65 km), long au-delà. La distance et la pente restent ainsi deux critères séparés.</p>
+      <p>Pour chaque catégorie, on compare ton score moyen à ton score moyen toutes courses confondues sur la même période. Un écart de +20 veut dire que tu y scores 20 points de mieux que d'habitude. Avec une ou deux courses dans une catégorie, l'écart reste indicatif : une mauvaise journée pèse lourd.</p>
+      <p>La progression compare ta moyenne de la période à celle de la période précédente de même durée. La régularité est l'écart type de tes scores sur la période.</p>
+      <p>Le score probable d'une course se calcule en trois morceaux, affichés sous chaque score : ton niveau (ta moyenne des 12 derniers mois), plus ton écart sur ce terrain, plus ton écart sur ce format. Exemple pour Brocéliande : 647 − 7 (roulant) + 3 (court) = 643.</p>
+      <p>Un écart mesuré sur une seule course ne compte qu'au tiers, sur deux courses à moitié, puis de plus en plus : une seule mauvaise journée ne doit pas classer un terrain comme ton point faible. C'est pourquoi l'estimation de Brocéliande (643) dépasse ton vrai score de 625 : ton −22 au roulant ne repose que sur cette course. Pour un terrain ou un format que tu n'as jamais couru, on reprend l'écart de la catégorie voisine, et c'est marqué « estimé ». La clémence propre à chaque course n'est mesurée que pour Brocéliande, où les coureurs de tête ont scoré 10 à 40 points au-dessus de leurs autres courses.</p>
+    </section>
+  </div>
+
+</div>
+
+<script>
+  const EXPONENT = 1.27;
+  const DRIFT_SAME = -0.003;
+  const BAND_SAME = 0.010;
+  const BAND_CHANGED = 0.033;
+  const HEAT_PER_DEGREE = 0.0054;
+  const PACE_DPLUS_PER_KM = 55;
+  const PACE_EXPONENT = 1.134;
+
+  const RACES = [
+    { group: "Veni Vici · 7 novembre 2026", id: "vv18", name: "Veni Vici 18 km", last: { year: 2025, dist: 16, gain: 570, tref: 2966.721 }, next: { dist: 18, gain: 525 }, start: "14:00",
+      checkpoints: [["Lédenon", 8.98, 267], ["Pont du Gard (arrivée)", 18.57, 467]],
+      note: "2025 : 16 km. Parcours 2026 : site de la course ; points de passage : LiveTrail." },
+    { group: "Veni Vici · 7 novembre 2026", id: "vv33", name: "Veni Vici 33 km", last: { year: 2025, dist: 27, gain: 710, tref: 5127.863 }, next: { dist: 33, gain: 715 }, start: "10:00",
+      checkpoints: [["Argilliers", 14.68, 328], ["Castillon-du-Gard", 27.17, 526], ["Pont du Gard (arrivée)", 34.1, 607]],
+      note: "2025 : 27 km. Parcours 2026 : site de la course ; points de passage : LiveTrail." },
+    { group: "Veni Vici · 7 novembre 2026", id: "vv52", name: "Veni Vici 52 km", last: { year: 2025, dist: 48, gain: 1300, tref: 10590.906 }, next: { dist: 52, gain: 1470 }, start: "08:00",
+      checkpoints: [["Lédenon", 18.65, 644], ["Cabrières", 26.26, 805], ["Escattes", 38.41, 1064], ["Nîmes, Arènes (arrivée)", 52.48, 1273]],
+      note: "2025 : 48 km. Parcours 2026 : site de la course ; points de passage : LiveTrail." },
+    { group: "Veni Vici · 7 novembre 2026", id: "vv87", name: "Veni Vici 87 km", last: { year: 2025, dist: 82, gain: 2240, tref: 20487.879 }, next: { dist: 87, gain: 2250 }, start: "07:30",
+      checkpoints: [["Argilliers", 14.71, 325], ["Castillon-du-Gard", 27.17, 519], ["Saint-Bonnet-du-Gard", 40.58, 788], ["Lédenon", 54.09, 1271], ["Cabrières", 61.7, 1432], ["Escattes", 73.85, 1690], ["Nîmes, Arènes (arrivée)", 87.91, 1899]],
+      note: "2025 : 82 km. Points de passage : LiveTrail. ITRA a parfois gardé le T_ref d'une année sur l'autre ici : 600 demanderait alors 9:27:24." },
+    { group: "Festival des Templiers", id: "boffi", name: "Boffi Fifty", last: { year: 2026, dist: 46.56, gain: 1995, tref: 12470.91 } },
+    { group: "Chamonix · UTMB Mont-Blanc", id: "utmb", name: "UTMB", last: { year: 2026, dist: 171, gain: 9700, tref: 65324.77 } },
+    { group: "Chamonix · UTMB Mont-Blanc", id: "ccc", name: "CCC", last: { year: 2026, dist: 107.2, gain: 6155, tref: 35830.1 } },
+    { group: "Chamonix · UTMB Mont-Blanc", id: "tds", name: "TDS", last: { year: 2026, dist: 154.4, gain: 9700, tref: 63847.27 } },
+    { group: "Chamonix · UTMB Mont-Blanc", id: "occ", name: "OCC", last: { year: 2026, dist: 60.52, gain: 3410, tref: 17847.86 } },
+    { group: "Chamonix · UTMB Mont-Blanc", id: "mcc", name: "MCC", last: { year: 2026, dist: 38.6, gain: 2310, tref: 11131.41 } },
+    { group: "Courses locales", id: "graal", name: "Trail le Graal (Brocéliande)", last: { year: 2026, dist: 26, gain: 700, tref: 4757.6 } },
+    { group: "Courses locales", id: "guerledan", name: "Trail de Guerlédan", last: { year: 2026, dist: 66.15, gain: 2369, tref: 17749.87 } },
+    { group: "Courses locales", id: "citadelles", name: "Trail des Citadelles 40 km", last: { year: 2026, dist: 39, gain: 2000, tref: 10223.33 } },
+    { group: "Courses locales", id: "hospitaliers", name: "Trail des Hospitaliers", last: { year: 2025, dist: 75.4, gain: 3294, tref: 21921.18 } },
+    { group: "Courses locales", id: "herault", name: "Hérault Trail (Pic Saint-Loup)", last: { year: 2026, dist: 63.7, gain: 2720, tref: 19326.41 } },
+    { group: "Courses locales", id: "matheysins", name: "SkyRace des Matheysins", last: { year: 2026, dist: 25.35, gain: 1922, tref: 7907.09 } },
+    { group: "Courses locales", id: "neirivue", name: "Neirivue-Moléson", last: { year: 2026, dist: 10.6, gain: 1290, tref: 3288.03 } },
+    { group: "Autre", id: "custom", name: "Autre course (saisie libre)", last: { year: null, dist: 42, gain: 1500, tref: null } },
+  ];
+
+  const $ = id => document.getElementById(id);
+  const els = {
+    race: $("race"), raceNote: $("race-note"), lastDist: $("last-dist"), lastGain: $("last-gain"),
+    knownTime: $("known-time"), knownScore: $("known-score"), derived: $("derived"),
+    nextDist: $("next-dist"), nextGain: $("next-gain"), chip: $("course-chip"),
+    scoreRange: $("score-range"), score: $("score"), presets: $("presets"), heat: $("heat"),
+    bibRace: $("bib-race"), bibCourse: $("bib-course"), tSafe: $("t-safe"), tReliability: $("t-reliability"), tMargin: $("t-margin"), tExplain: $("t-explain"),
+    bibScore: $("bib-score"), tPace: $("t-pace"), method: $("method"), heatNote: $("heat-note"), ladder: $("ladder"),
+    start: $("start"), checkpoints: $("checkpoints"), planBox: $("plan-box"), plan: $("plan"), planCaption: $("plan-caption"),
+  };
+
+  function parseCheckpoints(text, finishKm, finishGain) {
+    const points = String(text || "").split("\n").map(line => line.split(/[;\t]/).map(s => s.trim())).filter(p => p.length >= 2 && p[0] !== "")
+      .map(([name, km, dplus]) => ({ name, km: Number(String(km).replace(",", ".")), dplus: dplus === undefined || dplus === "" ? null : Number(String(dplus).replace(",", ".")) }))
+      .filter(p => Number.isFinite(p.km) && p.km > 0).sort((a, b) => a.km - b.km);
+    if (!points.length) return [];
+    const last = points[points.length - 1];
+    if (last.km < finishKm - 0.5) points.push({ name: "Arrivée", km: finishKm, dplus: finishGain });
+    const end = points[points.length - 1];
+    const endGain = end.dplus ?? finishGain;
+    return points.map(p => ({ ...p, dplus: p.dplus ?? endGain * p.km / end.km }));
+  }
+
+  function splitFractions(points) {
+    const effort = p => p.km + p.dplus / PACE_DPLUS_PER_KM;
+    const total = effort(points[points.length - 1]);
+    return points.map(p => Math.pow(effort(p) / total, PACE_EXPONENT));
+  }
+
+  function clockAt(start, elapsed) {
+    const m = String(start || "").trim().match(/^(\d{1,2})[:h](\d{2})$/);
+    if (!m) return "–";
+    const total = (Number(m[1]) * 3600 + Number(m[2]) * 60 + Math.round(elapsed)) % 86400;
+    return `${String(Math.floor(total / 3600)).padStart(2, "0")}:${String(Math.floor(total % 3600 / 60)).padStart(2, "0")}`;
+  }
+
+  function parseTime(text) {
+    const parts = String(text || "").trim().split(/[:h'’]/).filter(p => p !== "").map(Number);
+    if (!parts.length || parts.some(n => !Number.isFinite(n) || n < 0)) return null;
+    const [h, m, s] = parts.length === 3 ? parts : parts.length === 2 ? [0, parts[0], parts[1]] : [0, 0, parts[0]];
+    const total = h * 3600 + m * 60 + s;
+    return total > 0 ? total : null;
+  }
+
+  function formatTime(seconds) {
+    if (!Number.isFinite(seconds) || seconds <= 0) return "–";
+    const total = Math.floor(seconds);
+    const h = Math.floor(total / 3600), m = Math.floor(total % 3600 / 60), s = total % 60;
+    return `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+  }
+
+  function formatMinutes(seconds) {
+    if (!Number.isFinite(seconds) || seconds <= 0) return "–";
+    const total = Math.floor(seconds / 60);
+    return `${Math.floor(total / 60)}h${String(total % 60).padStart(2, "0")}`;
+  }
+
+  function formatPace(seconds, km) {
+    if (!(seconds > 0 && km > 0)) return "–";
+    const perKm = Math.round(seconds / km);
+    return `${Math.floor(perKm / 60)}:${String(perKm % 60).padStart(2, "0")}`;
+  }
+
+  const kmEffort = (dist, gain) => dist + gain / 100;
+  const maxTimeFor = (tref, score) => Math.floor(1000 * tref / score);
+
+  function forecast(last, next) {
+    const same = Math.abs(last.dist - next.dist) < 1e-9 && Math.abs(last.gain - next.gain) < 1e-9;
+    const ratio = kmEffort(next.dist, next.gain) / kmEffort(last.dist, last.gain);
+    const mid = same ? last.tref * (1 + DRIFT_SAME) : last.tref * Math.pow(ratio, EXPONENT);
+    const band = same ? BAND_SAME : BAND_CHANGED;
+    return { same, ratio, mid, strict: mid * (1 - band), lenient: mid * (1 + band), band };
+  }
+
+  function fillRaces() {
+    const groups = new Map();
+    for (const race of RACES) {
+      if (!groups.has(race.group)) {
+        const og = document.createElement("optgroup"); og.label = race.group; groups.set(race.group, og); els.race.append(og);
+      }
+      const opt = document.createElement("option"); opt.value = race.id; opt.textContent = race.name; groups.get(race.group).append(opt);
+    }
+  }
+
+  function loadRace(id) {
+    const race = RACES.find(r => r.id === id);
+    const next = race.next || { dist: race.last.dist, gain: race.last.gain };
+    els.lastDist.value = race.last.dist;
+    els.lastGain.value = race.last.gain;
+    els.nextDist.value = next.dist;
+    els.nextGain.value = next.gain;
+    els.knownTime.value = "";
+    els.knownScore.value = "";
+    els.start.value = race.start ?? "";
+    els.checkpoints.value = (race.checkpoints ?? []).map(([name, km, dplus]) => `${name} ; ${km} ; ${dplus}`).join("\n");
+    els.raceNote.textContent = race.id === "custom"
+      ? "Le parcours se trouve sur le site de la course ; le temps et le score, sur ta fiche ITRA."
+      : race.note ?? `Parcours supposé identique à l'édition ${race.last.year}, modifie-le à l'étape 3 s'il change.`;
+    render();
+  }
+
+  function resultTref() {
+    const time = parseTime(els.knownTime.value);
+    const score = Number(els.knownScore.value);
+    if (!time || !(score > 0 && score <= 1000)) return null;
+    const low = score * time / 1000, high = (score + 1) * time / 1000;
+    return { low, high, mid: (low + high) / 2, score };
+  }
+
+  function currentTref() {
+    const race = RACES.find(r => r.id === els.race.value);
+    const fromResult = resultTref();
+    if (fromResult) {
+      els.derived.textContent = `Temps qui valait 1000 points l'an dernier : ${formatTime(Math.round(fromResult.mid))} (à ±${(50 / fromResult.score).toFixed(2)} % près), calculé depuis ce résultat.`;
+      return fromResult.mid;
+    }
+    if (race.last.tref) {
+      els.derived.textContent = `Pas besoin de résultat ici : le temps qui valait 1000 points en ${race.last.year} est connu (${formatTime(Math.round(race.last.tref))}). Un résultat saisi le remplace.`;
+      return race.last.tref;
+    }
+    els.derived.textContent = "Saisis ton temps et ton score de l'an dernier pour lancer le calcul.";
+    return null;
+  }
+
+  function setScore(value) {
+    const score = Math.min(1000, Math.max(100, Math.round(Number(value) || 600)));
+    els.score.value = score;
+    els.scoreRange.value = Math.min(950, Math.max(300, score));
+    for (const b of els.presets.querySelectorAll("button")) b.setAttribute("aria-pressed", String(Number(b.dataset.score) === score));
+    return score;
+  }
+
+  function render() {
+    const race = RACES.find(r => r.id === els.race.value);
+    const score = setScore(els.score.value);
+    const last = { dist: Number(els.lastDist.value), gain: Number(els.lastGain.value), tref: currentTref() };
+    const next = { dist: Number(els.nextDist.value), gain: Number(els.nextGain.value) };
+    els.bibRace.textContent = race.id === "custom" ? "Ta course" : race.name;
+    els.bibCourse.textContent = next.dist > 0 ? `${next.dist} km · ${next.gain} m D+ · ${kmEffort(next.dist, next.gain).toFixed(1)} km-effort` : "";
+    els.bibScore.textContent = `pour ${score} points minimum`;
+
+    const valid = last.dist > 0 && last.gain >= 0 && last.tref > 0 && next.dist > 0 && next.gain >= 0;
+    if (!valid) {
+      for (const el of [els.tSafe, els.tReliability, els.tMargin]) el.textContent = "–";
+      els.tPace.textContent = "";
+      els.tExplain.textContent = "";
+      els.method.textContent = "Il manque un résultat de l'an dernier (temps et score) ou le parcours.";
+      els.ladder.innerHTML = "";
+      els.heatNote.hidden = true;
+      els.planBox.hidden = true;
+      return;
+    }
+
+    const f = forecast(last, next);
+    const delta = (f.ratio - 1) * 100;
+    els.chip.className = `chip ${f.same ? "same" : "changed"}`;
+    els.chip.textContent = f.same ? "Parcours identique : T_ref reporté" : `Parcours modifié : ${delta >= 0 ? "+" : "−"}${Math.abs(delta).toFixed(1)} % de km-effort, T_ref recalculé`;
+
+    const target = maxTimeFor(f.strict, score);
+    const likely = maxTimeFor(f.mid, score);
+    els.tSafe.textContent = formatMinutes(target);
+    els.tPace.textContent = `soit ${formatPace(target, next.dist)} min/km de moyenne sur ${next.dist} km`;
+    els.tReliability.textContent = f.same ? "Élevée" : "Moyenne";
+    els.tMargin.textContent = `${Math.max(1, Math.round((likely - target) / 60))} min`;
+    els.tExplain.textContent = `Sans marge, le temps le plus probable pour ${score} est ${formatMinutes(likely)}.`;
+    els.method.textContent = f.same
+      ? "Parcours inchangé : ITRA reprend en général la référence de l'an dernier, la prévision est très fiable."
+      : "Parcours modifié : ITRA recalcule sa référence, d'où une marge plus large.";
+
+    const heat = Number(els.heat.value);
+    if (els.heat.value !== "" && Number.isFinite(heat) && heat !== 0) {
+      const slow = HEAT_PER_DEGREE * heat * (f.same ? 1 : 0.5);
+      const safe = maxTimeFor(f.strict, score);
+      const minutes = Math.abs(safe * slow / 60);
+      els.heatNote.hidden = false;
+      els.heatNote.innerHTML = heat > 0
+        ? `<b>Plus chaud de ${heat} °C.</b> À effort égal, compte environ ${minutes.toFixed(0)} min de plus que l'an dernier${f.same ? ", qu'ITRA ne compensera pas" : ", dont ITRA ne compensera qu'environ la moitié"}. Le chrono à battre reste ${formatMinutes(safe)} : vise une forme un peu meilleure.`
+        : `<b>Plus frais de ${Math.abs(heat)} °C.</b> À effort égal, tu devrais gagner environ ${minutes.toFixed(0)} min${f.same ? ", qu'ITRA ne retirera pas de ton score" : ", dont ITRA en reprendra environ la moitié"}. Le chrono à battre reste ${formatMinutes(safe)}.`;
+    } else {
+      els.heatNote.hidden = true;
+    }
+
+    const points = parseCheckpoints(els.checkpoints.value, next.dist, next.gain);
+    els.planBox.hidden = points.length < 2;
+    if (points.length >= 2) {
+      const finish = maxTimeFor(f.strict, score);
+      const fractions = splitFractions(points);
+      els.planCaption.textContent = `Plan de passage pour ${formatMinutes(finish)}`;
+      els.plan.innerHTML = points.map((p, i) => `<tr><td>${p.name.replace(/[<>&]/g, "")}</td><td>${p.km.toFixed(1)}</td><td>${formatMinutes(fractions[i] * finish)}</td><td>${clockAt(els.start.value, fractions[i] * finish)}</td></tr>`).join("");
+    }
+
+    const steps = [450, 500, 550, 600, 650, 700, 750, 800];
+    if (!steps.includes(score)) steps.push(score);
+    steps.sort((a, b) => a - b);
+    els.ladder.innerHTML = steps.map(s => `<tr class="${s === score ? "is-target" : ""}"><td>${s}</td><td>${formatMinutes(maxTimeFor(f.strict, s))}</td><td>${formatPace(maxTimeFor(f.strict, s), next.dist)}/km</td></tr>`).join("");
+  }
+
+  const AGE_WEIGHTS = [[12, 1.0], [18, 0.995], [24, 0.99], [30, 0.985], [36, 0.98]];
+  const EXPERIENCE_WEIGHTS = [[0.97], [0.99, 0.98], [1.0, 0.99, 0.99], [1.01, 1.0, 1.0, 0.99], [1.02, 1.01, 1.0, 1.0, 0.99]];
+  const MY_RESULTS = [
+    ["2026-10-17", 629, "Boffi Fifty (Templiers)", 46.56, 1995], ["2026-09-12", 625, "Trail le Graal (Brocéliande)", 26, 700],
+    ["2026-07-04", 648, "Val d'Aran Sky", 17, 919], ["2026-06-06", 668, "Chaussée des Géants, Ranc Qualiou", 20, 950],
+    ["2026-05-09", 663, "La Pastourelle", 30, 1233], ["2025-10-18", 626, "Boffi Fifty (Templiers)", 47.32, 2208],
+    ["2025-07-27", 589, "Courchevel 55 km", 55, 3442], ["2025-05-18", 520, "Marathon de l'Hortus", 44, 1459],
+    ["2025-04-19", 544, "Trail du Capuchadou", 52, 1500], ["2025-02-08", 456, "Foulées Sclérose en plaques", 21, 910],
+    ["2024-12-08", 380, "Trail de Villèle 25 km", 23, 800],
+  ];
+  const pe = {
+    results: $("results"), asOf: $("as-of"), simDate: $("sim-date"), simScore: $("sim-score"), goal: $("pi-goal"),
+    asOfText: $("pi-asof"), now: $("pi-now"), scenario: $("pi-scenario"), after: $("pi-after"), min: $("pi-min"),
+    goalText: $("pi-goal-text"), goalUse: $("pi-goal-use"), used: $("pi-used"), drops: $("pi-drops"),
+  };
+
+  const parseDay = s => { const m = String(s).trim().match(/^(\d{4})-(\d{2})-(\d{2})$/) || String(s).trim().match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    if (!m) return null; const [y, mo, d] = m[1].length === 4 ? [m[1], m[2], m[3]] : [m[3], m[2], m[1]]; return { y: +y, m: +mo, d: +d }; };
+  const dayKey = t => `${t.y}-${String(t.m).padStart(2, "0")}-${String(t.d).padStart(2, "0")}`;
+  const dayLabel = t => new Date(Date.UTC(t.y, t.m - 1, t.d)).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
+  const before = (a, b) => dayKey(a) < dayKey(b);
+  const monthsBetween = (a, b) => (b.y - a.y) * 12 + (b.m - a.m) - (b.d < a.d ? 1 : 0);
+  const addMonths = (t, k) => { const total = t.y * 12 + (t.m - 1) + k; const y = Math.floor(total / 12), m = total % 12 + 1; const last = new Date(Date.UTC(y, m, 0)).getUTCDate(); return { y, m, d: Math.min(t.d, last) }; };
+  const ageWeight = (date, asOf) => { const age = monthsBetween(date, asOf); if (age < 0) return null; const step = AGE_WEIGHTS.find(([limit]) => age < limit); return step ? step[1] : 0; };
+
+  function parseResults(text) {
+    return String(text || "").split("\n").map(line => line.split(/[;\t]/).map(s => s.trim())).filter(p => p.length >= 2)
+      .map(([date, score, name, km, dplus]) => ({
+        date: parseDay(date), score: Number(score), name: name || dayKey(parseDay(date) || { y: 0, m: 0, d: 0 }),
+        km: km ? Number(km.replace(",", ".")) : null, dplus: dplus ? Number(dplus.replace(",", ".")) : null,
+      }))
+      .filter(r => r.date && Number.isFinite(r.score) && r.score > 0);
+  }
+
+  function performanceIndex(results, asOf) {
+    const weighted = results.map(r => ({ ...r, w: ageWeight(r.date, asOf) })).filter(r => r.w).map(r => ({ ...r, ws: r.score * r.w }))
+      .sort((a, b) => b.ws - a.ws);
+    const top = weighted.slice(0, 5);
+    let best = { raw: 0, n: 0 };
+    top.forEach((_, i) => { const n = i + 1; const raw = EXPERIENCE_WEIGHTS[i].reduce((sum, w, k) => sum + w * top[k].ws, 0) / n; if (raw > best.raw) best = { raw, n }; });
+    return { pi: Math.floor(best.raw), raw: best.raw, n: best.n, ranked: weighted };
+  }
+
+  function minScore(results, race, predicate) {
+    for (let s = 1; s <= 1000; s++) if (predicate(performanceIndex([...results, { ...race, score: s }], race.date).pi)) return s;
+    return null;
+  }
+
+  function renderCote() {
+    const results = parseResults(pe.results.value);
+    const asOf = parseDay(pe.asOf.value);
+    if (!asOf) return;
+    const now = performanceIndex(results, asOf);
+    pe.asOfText.textContent = `au ${dayLabel(asOf)}`;
+    pe.now.textContent = now.pi || "–";
+    pe.scenario.textContent = now.n ? `calculée sur ${now.n === 1 ? "ta meilleure course" : `tes ${now.n} meilleures courses`}` : "aucun résultat dans les 36 derniers mois";
+    const counted = new Set(now.ranked.slice(0, now.n));
+    pe.used.innerHTML = now.ranked.map(r => `<tr class="${r.w === 0 ? "dropped" : ""}"><td class="${counted.has(r) ? "used" : "unused"}">${r.name.replace(/[<>&]/g, "")}<br><span class="fine">${dayLabel(r.date)}</span></td><td>${r.score}</td><td>${r.w.toFixed(3)}</td><td class="${counted.has(r) ? "used" : "unused"}">${r.ws.toFixed(1)}${counted.has(r) ? " ✓" : ""}</td></tr>`).join("")
+      || `<tr><td colspan="4">Ajoute au moins un résultat.</td></tr>`;
+
+    const raceDate = parseDay(pe.simDate.value);
+    const simScore = Number(pe.simScore.value);
+    if (raceDate && !before(raceDate, asOf)) {
+      const race = { date: raceDate, name: "Prochaine course" };
+      const base = performanceIndex(results, raceDate).pi;
+      if (simScore > 0) {
+        const after = performanceIndex([...results, { ...race, score: simScore }], raceDate).pi;
+        const delta = after - base;
+        pe.after.innerHTML = `${after} <span class="${delta > 0 ? "delta-up" : delta < 0 ? "delta-down" : ""}">(${delta > 0 ? "+" : ""}${delta})</span>`;
+      } else pe.after.textContent = "–";
+      const up = minScore(results, race, pi => pi > base);
+      pe.min.textContent = up ? String(up) : "> 1000";
+      const goal = Number(pe.goal.value);
+      if (goal > 0) {
+        const need = goal <= base ? 0 : minScore(results, race, pi => pi >= goal);
+        if (goal <= base) { pe.goalText.textContent = `Ta cote sera déjà de ${base} le ${dayLabel(raceDate)} : l'objectif de ${goal} est atteint.`; pe.goalUse.hidden = true; }
+        else if (need) { pe.goalText.innerHTML = `Pour passer à <strong>${goal}</strong>, il te faut un score de course d'au moins <strong>${need}</strong> le ${dayLabel(raceDate)}.`; pe.goalUse.hidden = false; pe.goalUse.dataset.score = need; }
+        else { pe.goalText.textContent = `Une seule course ne suffit pas pour atteindre ${goal} : il faudrait un score supérieur à 1000.`; pe.goalUse.hidden = true; }
+      }
+    } else {
+      pe.after.textContent = "–"; pe.min.textContent = "–";
+      pe.goalText.textContent = "Choisis une date de course postérieure au jour du calcul."; pe.goalUse.hidden = true;
+    }
+
+    const horizon = addMonths(asOf, 18);
+    const dates = new Map();
+    for (const r of results) for (const k of [12, 18, 24, 30, 36]) { const d = addMonths(r.date, k); if (before(asOf, d) && !before(horizon, d)) dates.set(dayKey(d), d); }
+    let previous = now.pi; const rows = [];
+    for (const d of [...dates.values()].sort((a, b) => (dayKey(a) < dayKey(b) ? -1 : 1))) {
+      const at = performanceIndex(results, d);
+      if (at.pi !== previous) {
+        const crossing = results.filter(r => [12, 18, 24, 30, 36].some(k => dayKey(addMonths(r.date, k)) === dayKey(d)));
+        const why = crossing.map(r => { const w = ageWeight(r.date, d); return `${r.name} ${w ? `passe à ${w.toFixed(3)}` : "sort du calcul"}`; }).join(", ");
+        rows.push(`<tr><td>${dayLabel(d)}</td><td style="white-space:normal;text-align:left">${why.replace(/[<>&]/g, "")}</td><td>${at.pi} <span class="delta-down">(${at.pi - previous})</span></td></tr>`);
+        previous = at.pi;
+      }
+    }
+    pe.drops.innerHTML = rows.join("") || `<tr><td colspan="3">Pas de baisse dans les 18 prochains mois.</td></tr>`;
+  }
+
+  const TERRAINS = [
+    { id: "roulant", label: "Roulant", hint: "moins de 30 m D+/km", on: "sur le roulant", races: "roulantes", test: r => r.dplus / r.km < 30 },
+    { id: "vallonne", label: "Vallonné", hint: "30 à 50 m D+/km", on: "sur le vallonné", races: "vallonnées", test: r => r.dplus / r.km >= 30 && r.dplus / r.km < 50 },
+    { id: "montagne", label: "Montagne", hint: "50 m D+/km et plus", on: "en montagne", races: "de montagne", test: r => r.dplus / r.km >= 50 },
+  ];
+  const FORMATS = [
+    { id: "court", label: "Court", hint: "moins de 35 km : 10K, semi", test: r => r.km < 35 },
+    { id: "moyen", label: "Moyen", hint: "35 à 65 km : marathon, 50K", test: r => r.km >= 35 && r.km < 65 },
+    { id: "long", label: "Long", hint: "65 km et plus : 50M, 100K…", test: r => r.km >= 65 },
+  ];
+  const ITRA_CATEGORIES = [[15, "10K"], [35, "Semi-marathon"], [45, "Marathon"], [65, "50K"], [90, "50M"], [130, "100K"], [190, "100M"], [Infinity, "Endurance"]];
+  const itraCategory = km => ITRA_CATEGORIES.find(([limit]) => km < limit)[1];
+  const signed = x => `${x >= 0 ? "+" : "−"}${Math.abs(Math.round(x))}`;
+  const mean = a => a.reduce((s, x) => s + x, 0) / a.length;
+  const sd = a => Math.sqrt(mean(a.map(x => (x - mean(a)) ** 2)));
+  const pf = {
+    source: $("pf-source"), edit: $("pf-edit"), table: $("pf-table"), period: $("pf-period"),
+    headline: $("pf-headline"), sub: $("pf-sub"), level: $("pf-level"), progress: $("pf-progress"),
+    regularity: $("pf-regularity"), advice: $("pf-advice"), terrain: $("pf-terrain"), format: $("pf-format"),
+  };
+
+  function groupStats(results, groups, overall) {
+    return groups.map(g => { const scores = results.filter(g.test).map(r => r.score); return { ...g, n: scores.length, avg: scores.length ? mean(scores) : null, delta: scores.length ? mean(scores) - overall : null }; });
+  }
+
+  function barsHtml(title, stats) {
+    const rows = stats.map(s => {
+      if (s.n === 0) return `<div class="bar-row empty"><span class="bar-label">${s.label}<small>${s.hint}</small></span><span class="bar-track"></span><span class="bar-val">–<small>aucune course</small></span></div>`;
+      const width = Math.min(50, Math.abs(s.delta) / 50 * 50);
+      const sign = s.delta >= 0 ? "pos" : "neg";
+      return `<div class="bar-row"><span class="bar-label">${s.label}<small>${s.hint}</small></span><span class="bar-track"><span class="bar-fill ${sign}" style="width:${width}%"></span></span><span class="bar-val">${signed(s.delta)} pts<small>${s.n} course${s.n > 1 ? "s" : ""}</small></span></div>`;
+    }).join("");
+    return `<h3>${title}</h3>${rows}`;
+  }
+
+  function terrainMessage(stats) {
+    const present = stats.filter(s => s.n);
+    if (present.length < 2) return null;
+    const sorted = [...present].sort((a, b) => b.avg - a.avg);
+    const spread = sorted[0].avg - sorted[sorted.length - 1].avg;
+    if (spread < 10) return { headline: "Polyvalent", weak: null };
+    const worst = sorted[sorted.length - 1];
+    const othersClose = sorted.slice(0, -1).every(s => s.avg - worst.avg >= 15);
+    if (worst.id === "roulant" && othersClose) return { headline: "Plus fort dès que ça grimpe", weak: worst };
+    if (worst.id === "montagne" && othersClose) return { headline: "Plus fort sur le roulant", weak: worst };
+    return { headline: `Plus fort ${sorted[0].on}`, weak: worst };
+  }
+
+  function computeProfile(months) {
+    const all = parseResults(pe.results.value);
+    const asOf = parseDay(pe.asOf.value);
+    if (!asOf) return null;
+    const from = addMonths(asOf, -months), fromPrev = addMonths(asOf, -2 * months);
+    const usable = all.filter(r => r.km > 0 && r.dplus >= 0);
+    const inWindow = usable.filter(r => !before(r.date, from) && !before(asOf, r.date));
+    const previous = all.filter(r => !before(r.date, fromPrev) && before(r.date, from));
+    const overall = inWindow.length ? mean(inWindow.map(r => r.score)) : null;
+    return { all, asOf, usable, inWindow, previous, overall,
+      terrain: overall === null ? [] : groupStats(inWindow, TERRAINS, overall), format: overall === null ? [] : groupStats(inWindow, FORMATS, overall) };
+  }
+
+  const PROFILE_MONTHS = 12;
+
+  function renderProfil() {
+    const months = PROFILE_MONTHS;
+    const profile = computeProfile(months);
+    if (!profile) return;
+    const { all, usable, inWindow, previous } = profile;
+    pf.source.textContent = `${all.length} résultats saisis dans l'onglet Simulateur de cote, dont ${usable.length} avec km et D+.`;
+    pf.period.textContent = `${months} derniers mois · ${inWindow.length} course${inWindow.length > 1 ? "s" : ""}`;
+    pf.table.innerHTML = inWindow.map(r => {
+      const t = TERRAINS.find(g => g.test(r)), f = FORMATS.find(g => g.test(r));
+      return `<tr><td>${r.name.replace(/[<>&]/g, "")}<br><span class="fine">${r.km} km · ${r.dplus} m D+</span></td><td>${r.score}</td><td>${t.label}<br><span class="fine">${Math.round(r.dplus / r.km)} m/km</span></td><td>${f.label}<br><span class="fine">${itraCategory(r.km)}</span></td></tr>`;
+    }).join("") || `<tr><td colspan="4">Aucune course avec km et D+ sur la période.</td></tr>`;
+
+    if (inWindow.length < 2) {
+      pf.headline.textContent = "Pas assez de courses"; pf.sub.textContent = "Il faut au moins deux courses avec km et D+ sur la période.";
+      for (const el of [pf.level, pf.progress]) el.textContent = "–";
+      pf.regularity.textContent = ""; pf.advice.textContent = ""; pf.terrain.innerHTML = ""; pf.format.innerHTML = "";
+      renderScorer(profile);
+      return;
+    }
+    const { overall, terrain, format } = profile;
+    pf.terrain.innerHTML = barsHtml("Terrain : écart à ta moyenne", terrain);
+    pf.format.innerHTML = barsHtml("Format : écart à ta moyenne", format);
+
+    const tm = terrainMessage(terrain);
+    const fPresent = format.filter(s => s.n).sort((a, b) => b.avg - a.avg);
+    const fSpread = fPresent.length > 1 ? fPresent[0].avg - fPresent[fPresent.length - 1].avg : 0;
+    const bestFormat = fPresent.length > 1 && fSpread >= 10 ? fPresent[0] : null;
+    pf.headline.textContent = tm ? tm.headline : "Un seul type de terrain";
+    pf.sub.textContent = [bestFormat ? `Meilleur sur format ${bestFormat.label.toLowerCase()} (${bestFormat.hint})` : "Pas d'écart net selon la distance",
+      tm && tm.weak ? `point faible : ${tm.weak.label.toLowerCase()} (${signed(tm.weak.delta)} pts)` : null].filter(Boolean).join(" · ");
+
+    pf.level.textContent = String(Math.round(overall));
+    if (previous.length) {
+      const gain = Math.round(overall - mean(previous.map(r => r.score)));
+      pf.progress.innerHTML = `<span class="${gain > 0 ? "delta-up" : gain < 0 ? "delta-down" : ""}">${gain > 0 ? "+" : ""}${gain} pts</span>`;
+    } else pf.progress.textContent = "–";
+    const spread = sd(inWindow.map(r => r.score));
+    pf.regularity.textContent = `Régularité : ±${Math.round(spread)} pts d'une course à l'autre (${spread < 20 ? "très régulier" : spread < 40 ? "régulier" : "irrégulier"}).`;
+    const goodTerrains = terrain.filter(s => s.n && tm && (!tm.weak || s.id !== tm.weak.id)).map(s => s.races);
+    pf.advice.textContent = goodTerrains.length && tm && tm.weak
+      ? `Pour scorer : vise des courses ${goodTerrains.join(" ou ")}${bestFormat ? ` en format ${bestFormat.label.toLowerCase()}` : ""}.`
+      : "";
+    renderScorer(profile);
+  }
+
+  const SHRINK = 2;
+  const LENIENCY_NOTES = { graal: "Mesurée généreuse : les coureurs de tête y ont scoré 10 à 40 pts au-dessus de leurs autres courses." };
+  const sc = { extra: $("sc-extra"), table: $("sc-table"), caption: $("sc-caption") };
+
+  function catalogue() {
+    const known = RACES.filter(r => r.last.tref).map(r => {
+      const next = r.next || { dist: r.last.dist, gain: r.last.gain };
+      return { id: r.id, name: r.name, km: next.dist, dplus: next.gain, forecast: forecast(r.last, next) };
+    });
+    const extra = String(sc.extra.value || "").split("\n").map(l => l.split(/[;\t]/).map(s => s.trim())).filter(p => p.length >= 5)
+      .map(([name, km, dplus, time, score]) => {
+        const t = parseTime(time), s = Number(score), dist = Number(String(km).replace(",", ".")), gain = Number(String(dplus).replace(",", "."));
+        if (!(t && s > 0 && dist > 0 && gain >= 0)) return null;
+        const tref = (s + 0.5) * t / 1000;
+        return { id: `extra-${name}`, name, km: dist, dplus: gain, forecast: forecast({ dist, gain, tref }, { dist, gain }), extra: true };
+      }).filter(Boolean);
+    return [...known, ...extra];
+  }
+
+  function shrunkDelta(stats, race) {
+    const i = stats.findIndex(s => s.test(race));
+    const g = stats[i];
+    if (g.n) return { delta: g.delta * g.n / (g.n + SHRINK), group: g, estimated: false };
+    const nearest = stats.map((s, k) => ({ s, d: Math.abs(k - i) })).filter(x => x.s.n).sort((a, b) => a.d - b.d)[0];
+    return nearest ? { delta: nearest.s.delta * nearest.s.n / (nearest.s.n + SHRINK), group: g, estimated: true } : { delta: 0, group: g, estimated: true };
+  }
+
+  function renderScorer(profile) {
+    if (!profile || profile.inWindow.length < 2) { sc.table.innerHTML = `<tr><td colspan="5">Il faut au moins deux courses avec km et D+ sur la période.</td></tr>`; return; }
+    const rows = catalogue().map(race => {
+      const t = shrunkDelta(profile.terrain, race), f = shrunkDelta(profile.format, race);
+      const expected = Math.round(profile.overall) + Math.round(t.delta) + Math.round(f.delta);
+      return { ...race, expected, terrain: t, format: f, likely: 1000 * race.forecast.mid / expected };
+    }).sort((a, b) => b.expected - a.expected);
+    const level = Math.round(profile.overall);
+    const part = (adj, label) => { const v = Math.round(adj.delta); return `${v >= 0 ? "+" : "−"} ${Math.abs(v)} ${label}${adj.estimated ? " (estimé)" : ""}`; };
+    const already = race => profile.all.filter(r => { const a = r.name.toLowerCase(), b = race.name.toLowerCase(); return a.includes(b) || b.includes(a); })
+      .sort((x, y) => (dayKey(x.date) < dayKey(y.date) ? 1 : -1))[0];
+    sc.caption.textContent = `Les ${rows.length} courses classées pour toi`;
+    sc.table.innerHTML = rows.map((r, i) => {
+      const done = already(r);
+      return `<tr class="${i < 3 ? "is-target" : ""}"><td style="white-space:normal">${r.name.replace(/[<>&]/g, "")}${done ? `<br><span class="fine">Déjà couru : ${done.score} en ${done.date.y}</span>` : ""}${LENIENCY_NOTES[r.id] ? `<br><span class="fine">${LENIENCY_NOTES[r.id]}</span>` : ""}${r.extra ? `<br><span class="fine">ajoutée par toi</span>` : ""}</td><td>${r.terrain.group.label} · ${r.format.group.label.toLowerCase()}</td><td><strong>${Math.round(r.expected)}</strong><br><span class="fine">${level} ${part(r.terrain, r.terrain.group.label.toLowerCase())} ${part(r.format, r.format.group.label.toLowerCase())}</span></td><td>${formatMinutes(r.likely)}</td><td>${r.extra ? "" : `<button type="button" class="action" data-race="${r.id}">Préparer</button>`}</td></tr>`;
+    }).join("");
+    const best = rows[0];
+    pf.advice.textContent = `${pf.advice.textContent ? pf.advice.textContent + " " : ""}Ta meilleure chance dans la liste : ${best.name} (score probable ${Math.round(best.expected)}).`;
+  }
+
+  function showView(view) {
+    for (const b of document.querySelectorAll(".tabs button")) b.setAttribute("aria-selected", String(b.dataset.view === view));
+    for (const v of ["chrono", "cote", "profil"]) $(`view-${v}`).hidden = view !== v;
+    if (view === "profil") renderProfil();
+  }
+
+  const todayKey = new Date().toISOString().slice(0, 10);
+  pe.results.value = MY_RESULTS.map(([d, s, n, km, dp]) => `${d} ; ${s} ; ${n} ; ${km} ; ${dp}`).join("\n");
+  pe.asOf.value = todayKey < "2026-10-30" ? "2026-10-30" : todayKey;
+  pe.simDate.value = pe.asOf.value < "2026-11-07" ? "2026-11-07" : pe.asOf.value;
+  pe.simScore.value = 660;
+  pe.goal.value = 670;
+  for (const el of [pe.results, pe.asOf, pe.simDate, pe.simScore, pe.goal]) el.addEventListener("input", renderCote);
+  pe.goalUse.addEventListener("click", () => { els.score.value = pe.goalUse.dataset.score; showView("chrono"); render(); });
+  for (const b of document.querySelectorAll(".tabs button")) b.addEventListener("click", () => showView(b.dataset.view));
+  pf.edit.addEventListener("click", () => { showView("cote"); pe.results.focus(); });
+  sc.extra.addEventListener("input", renderProfil);
+  sc.table.addEventListener("click", e => {
+    const b = e.target.closest("button[data-race]");
+    if (!b) return;
+    els.race.value = b.dataset.race; loadRace(b.dataset.race); showView("chrono");
+  });
+  showView({ "#cote": "cote", "#profil": "profil", "#scorer": "profil" }[location.hash] ?? "chrono");
+  renderCote();
+
+  fillRaces();
+  els.race.addEventListener("change", () => loadRace(els.race.value));
+  els.scoreRange.addEventListener("input", () => { els.score.value = els.scoreRange.value; render(); });
+  els.score.addEventListener("change", render);
+  els.score.addEventListener("input", () => { if (Number(els.score.value) >= 100) render(); });
+  els.presets.addEventListener("click", e => { const b = e.target.closest("button"); if (b) { els.score.value = b.dataset.score; render(); } });
+  for (const el of [els.lastDist, els.lastGain, els.nextDist, els.nextGain, els.heat, els.knownTime, els.knownScore, els.start, els.checkpoints]) el.addEventListener("input", render);
+  document.getElementById("form").addEventListener("submit", e => e.preventDefault());
+
+  els.race.value = "vv52";
+  els.score.value = 600;
+  loadRace("vv52");
+</script>
