@@ -348,7 +348,6 @@
           <span class="k">Chrono à viser</span>
           <span class="bib-time" id="t-safe">–</span>
           <span class="bib-score" id="t-pace"></span>
-          <span class="bib-score" id="bib-score"></span>
         </div>
         <div class="bib-alts">
           <div><span class="k">Fiabilité</span><span class="v" id="t-reliability">–</span></div>
@@ -699,7 +698,7 @@
     nextDist: $("next-dist"), nextGain: $("next-gain"), chip: $("course-chip"),
     scoreRange: $("score-range"), score: $("score"), presets: $("presets"),
     bibRace: $("bib-race"), bibCourse: $("bib-course"), tSafe: $("t-safe"), tReliability: $("t-reliability"), tMargin: $("t-margin"), tExplain: $("t-explain"),
-    bibScore: $("bib-score"), tPace: $("t-pace"), method: $("method"), ladder: $("ladder"),
+    tPace: $("t-pace"), method: $("method"), ladder: $("ladder"),
     planBox: $("plan-box"), plan: $("plan"), planCaption: $("plan-caption"),
   };
 
@@ -883,7 +882,6 @@
     const next = { dist: Number(els.nextDist.value), gain: Number(els.nextGain.value) };
     els.bibRace.textContent = race.id === "custom" ? customName || "Ta course" : race.name;
     els.bibCourse.textContent = next.dist > 0 ? `${next.dist} km · ${next.gain} m D+ · ${kmEffort(next.dist, next.gain).toFixed(1)} km-effort` : "";
-    els.bibScore.textContent = `pour ${score} points minimum, environ 9 fois sur 10`;
     els.courseSummary.textContent = next.dist > 0 ? `Parcours : ${next.dist} km · +${next.gain} m D+` : "";
     els.shareBox.hidden = !(shared.writable && race.id !== "custom" && resultTref());
 
@@ -911,7 +909,7 @@
     els.tPace.textContent = `soit ${formatPace(target, next.dist)} min/km de moyenne sur ${next.dist} km`;
     els.tReliability.textContent = f.noHistory ? "Faible" : f.same ? "Élevée" : "Moyenne";
     els.tMargin.textContent = `${Math.max(1, Math.round((likely - target) / 60))} min`;
-    els.tExplain.textContent = `Sans marge, le temps le plus probable pour ${score} est ${formatMinutes(likely)}, soit ${formatPace(likely, next.dist)} min/km : une chance sur deux d'avoir les points.`;
+    els.tExplain.textContent = `Sans marge, le temps le plus probable pour ${score} est ${formatMinutes(likely)}, soit ${formatPace(likely, next.dist)} min/km.`;
     els.method.textContent = f.noHistory
       ? "Sans historique : estimation à partir de la distance et du D+ seulement. Un résultat de l'an dernier la rendrait bien plus fiable."
       : f.same
