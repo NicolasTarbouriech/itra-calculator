@@ -111,7 +111,15 @@
 
   /* Dossard */
   .bib-wrap { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 16px); display: grid; gap: 16px; min-width: 0; }
-  @media (max-width: 860px) { .bib-wrap { position: static; order: -1; } }
+  @media (max-width: 860px) {
+    .bib-wrap { position: static; order: -1; }
+    #view-chrono .layout > form { display: contents; }
+    #view-chrono .fs-course { order: 1; }
+    #view-chrono .fs-goal { order: 2; }
+    #view-chrono .bib-wrap { order: 3; }
+    #view-chrono .fs-history { order: 4; }
+    #view-chrono .fs-next { order: 5; }
+  }
   .bib {
     position: relative; background: var(--bib-bg); color: var(--bib-fg); border-radius: 6px;
     border: 1px solid var(--bib-line); padding: 26px 24px 20px; display: grid; gap: 14px;
@@ -154,6 +162,20 @@
   td { font-family: var(--font-mono); }
   tbody tr + tr td { border-top: 1px solid var(--line); }
   tr.is-target td { background: var(--accent-soft); font-weight: 500; }
+  #plan td:first-child { white-space: normal; min-width: 7em; }
+  .race-results { display: grid; gap: 6px; max-height: 340px; overflow-y: auto; }
+  .race-results:empty { display: none; }
+  .race-option {
+    font: inherit; text-align: left; background: var(--bg); color: var(--fg); border: 1px solid var(--line);
+    border-radius: 7px; padding: 8px 10px; cursor: pointer; display: grid; gap: 2px;
+  }
+  .race-option:hover, .race-option:focus-visible { border-color: var(--accent); }
+  .race-option small { color: var(--muted); font-size: 12px; }
+  .race-option .tag { color: var(--safe); font-weight: 600; }
+  .callout { background: var(--warn-soft); border-color: transparent; }
+  .callout-title { font-size: 15px; }
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  @media (max-width: 480px) { th, td { padding: 7px 8px; } }
   tr.is-target td:first-child { color: var(--accent); }
 
   .method { display: grid; gap: 14px; max-width: 72ch; }
@@ -215,56 +237,19 @@
   <div class="view" id="view-chrono" role="tabpanel" aria-labelledby="tab-chrono">
   <div class="layout">
     <form class="panel" id="form" autocomplete="off">
-      <fieldset>
+      <fieldset class="fs-course">
         <legend><span class="step">1</span> Course</legend>
         <div class="group">
-          <label for="race">Course
-            <select id="race"></select>
+          <label for="race">Cherche ta course
+            <input id="race" type="search" placeholder="Veni Vici, Mallorca, Saintélyon…" autocomplete="off" spellcheck="false">
           </label>
+          <div class="race-results" id="race-results" role="listbox" aria-label="Courses trouvées"></div>
           <span class="fine" id="race-note"></span>
         </div>
       </fieldset>
 
-      <fieldset>
-        <legend><span class="step">2</span> L'an dernier <span class="hint" style="text-transform:none;letter-spacing:0;font-weight:400">facultatif, mais 15 fois plus précis</span></legend>
-        <div class="group">
-          <div class="row">
-            <label for="known-time">Ton temps <span class="hint">ou celui d'un finisher, h:mm:ss</span>
-              <input id="known-time" class="num" type="text" placeholder="5:53:47" inputmode="numeric">
-            </label>
-            <label for="known-score">Score de course obtenu
-              <input id="known-score" class="num" type="number" min="1" max="1000" step="1" placeholder="626" inputmode="numeric">
-            </label>
-          </div>
-          <div class="row">
-            <label for="last-dist">Distance <span class="hint">km</span>
-              <input id="last-dist" class="num" type="number" step="0.01" min="1" inputmode="decimal">
-            </label>
-            <label for="last-gain">D+ <span class="hint">m</span>
-              <input id="last-gain" class="num" type="number" step="1" min="0" inputmode="numeric">
-            </label>
-          </div>
-          <span class="derived" id="derived"></span>
-        </div>
-      </fieldset>
-
-      <fieldset>
-        <legend><span class="step">3</span> Prochaine édition</legend>
-        <div class="group">
-          <div class="row">
-            <label for="next-dist">Distance annoncée <span class="hint">km, site de la course</span>
-              <input id="next-dist" class="num" type="number" step="0.01" min="1" inputmode="decimal">
-            </label>
-            <label for="next-gain">D+ annoncé <span class="hint">m</span>
-              <input id="next-gain" class="num" type="number" step="1" min="0" inputmode="numeric">
-            </label>
-          </div>
-          <span class="chip same" id="course-chip">Parcours identique</span>
-        </div>
-      </fieldset>
-
-      <fieldset>
-        <legend><span class="step">4</span> Objectif</legend>
+      <fieldset class="fs-goal">
+        <legend><span class="step">2</span> Objectif</legend>
         <div class="group">
           <div class="score-pick">
             <label for="score-range">Score de course visé
@@ -281,6 +266,46 @@
             <button type="button" data-score="700">700</button>
             <button type="button" data-score="750">750</button>
           </div>
+        </div>
+      </fieldset>
+
+      <fieldset class="fs-history" id="fs-history">
+        <legend class="sr-only">Résultat d'une édition passée</legend>
+        <div class="group callout">
+          <strong class="callout-title">Tu as un résultat d'une édition passée ?</strong>
+          <span class="fine">Sans données sur cette course, le chrono est estimé à partir du seul parcours. Un seul temps et son score, le tien ou celui d'un ami, d'une année au choix, le rendent bien plus fiable.</span>
+          <div class="row">
+            <label for="known-time">Temps <span class="hint">h:mm:ss</span>
+              <input id="known-time" class="num" type="text" placeholder="5:53:47" inputmode="numeric">
+            </label>
+            <label for="known-score">Score de course obtenu
+              <input id="known-score" class="num" type="number" min="1" max="1000" step="1" placeholder="626" inputmode="numeric">
+            </label>
+          </div>
+          <div class="row">
+            <label for="last-dist">Distance cette année-là <span class="hint">km</span>
+              <input id="last-dist" class="num" type="number" step="0.01" min="1" inputmode="decimal">
+            </label>
+            <label for="last-gain">D+ cette année-là <span class="hint">m</span>
+              <input id="last-gain" class="num" type="number" step="1" min="0" inputmode="numeric">
+            </label>
+          </div>
+          <span class="derived" id="derived"></span>
+        </div>
+      </fieldset>
+
+      <fieldset class="fs-next">
+        <legend><span class="step">3</span> Prochaine édition</legend>
+        <div class="group">
+          <div class="row">
+            <label for="next-dist">Distance annoncée <span class="hint">km, site de la course</span>
+              <input id="next-dist" class="num" type="number" step="0.01" min="1" inputmode="decimal">
+            </label>
+            <label for="next-gain">D+ annoncé <span class="hint">m</span>
+              <input id="next-gain" class="num" type="number" step="1" min="0" inputmode="numeric">
+            </label>
+          </div>
+          <span class="chip same" id="course-chip">Parcours identique</span>
         </div>
       </fieldset>
     </form>
@@ -478,6 +503,7 @@
 
 </div>
 
+<script src="catalogue.js"></script>
 <script>
   const EXPONENT = 1.27;
   const DRIFT_SAME = -0.003;
@@ -490,18 +516,22 @@
   const PACE_EXPONENT = 1.134;
 
   const RACES = [
-    { group: "Veni Vici · 7 novembre 2026", id: "vv18", name: "Veni Vici 18 km", last: { year: 2025, dist: 16, gain: 570, tref: 2966.721 }, next: { dist: 18, gain: 525 }, start: "14:00",
+    { group: "Veni Vici · 7 novembre 2026", id: "vv18", lt: "lavenivici:18km", name: "Veni Vici 18 km", last: { year: 2025, dist: 16, gain: 570, tref: 2966.721 }, next: { dist: 18, gain: 525 }, start: "14:00",
       checkpoints: [["Lédenon", 8.98, 267], ["Pont du Gard (arrivée)", 18.57, 467]],
       note: "2025 : 16 km. Parcours 2026 : site de la course ; points de passage : LiveTrail." },
-    { group: "Veni Vici · 7 novembre 2026", id: "vv33", name: "Veni Vici 33 km", last: { year: 2025, dist: 27, gain: 710, tref: 5127.863 }, next: { dist: 33, gain: 715 }, start: "10:00",
+    { group: "Veni Vici · 7 novembre 2026", id: "vv33", lt: "lavenivici:33km", name: "Veni Vici 33 km", last: { year: 2025, dist: 27, gain: 710, tref: 5127.863 }, next: { dist: 33, gain: 715 }, start: "10:00",
       checkpoints: [["Argilliers", 14.68, 328], ["Castillon-du-Gard", 27.17, 526], ["Pont du Gard (arrivée)", 34.1, 607]],
       note: "2025 : 27 km. Parcours 2026 : site de la course ; points de passage : LiveTrail." },
-    { group: "Veni Vici · 7 novembre 2026", id: "vv52", name: "Veni Vici 52 km", last: { year: 2025, dist: 48, gain: 1300, tref: 10590.906 }, next: { dist: 52, gain: 1470 }, start: "08:00",
+    { group: "Veni Vici · 7 novembre 2026", id: "vv52", lt: "lavenivici:52km", name: "Veni Vici 52 km", last: { year: 2025, dist: 48, gain: 1300, tref: 10590.906 }, next: { dist: 52, gain: 1470 }, start: "08:00",
       checkpoints: [["Lédenon", 18.65, 644], ["Cabrières", 26.26, 805], ["Escattes", 38.41, 1064], ["Nîmes, Arènes (arrivée)", 52.48, 1273]],
       note: "2025 : 48 km. Parcours 2026 : site de la course ; points de passage : LiveTrail." },
-    { group: "Veni Vici · 7 novembre 2026", id: "vv87", name: "Veni Vici 87 km", last: { year: 2025, dist: 82, gain: 2240, tref: 20487.879 }, next: { dist: 87, gain: 2250 }, start: "07:30",
+    { group: "Veni Vici · 7 novembre 2026", id: "vv87", lt: "lavenivici:87km", name: "Veni Vici 87 km", last: { year: 2025, dist: 82, gain: 2240, tref: 20487.879 }, next: { dist: 87, gain: 2250 }, start: "07:30",
       checkpoints: [["Argilliers", 14.71, 325], ["Castillon-du-Gard", 27.17, 519], ["Saint-Bonnet-du-Gard", 40.58, 788], ["Lédenon", 54.09, 1271], ["Cabrières", 61.7, 1432], ["Escattes", 73.85, 1690], ["Nîmes, Arènes (arrivée)", 87.91, 1899]],
       note: "2025 : 82 km. Points de passage : LiveTrail. ITRA a parfois gardé le T_ref d'une année sur l'autre ici : 600 demanderait alors 9:27:24." },
+    { group: "Mallorca by UTMB", id: "mal-cda", lt: "mallorcabyutmb:cda", name: "Mallorca by UTMB · CDA Camins de s'Arxiduc", last: { year: 2025, dist: 26, gain: 1000, tref: 6173.6 } },
+    { group: "Mallorca by UTMB", id: "mal-etm", lt: "mallorcabyutmb:etm", name: "Mallorca by UTMB · ETM Els Tres Mils", last: { year: 2025, dist: 56, gain: 2450, tref: 16522.4 } },
+    { group: "Mallorca by UTMB", id: "mal-cps", lt: "mallorcabyutmb:cps", name: "Mallorca by UTMB · CPS Camins de Pedra en Sec", last: { year: 2025, dist: 104, gain: 3470, tref: 31095.37 } },
+    { group: "Mallorca by UTMB", id: "mal-sdt", lt: "mallorcabyutmb:sdt", name: "Mallorca by UTMB · SDT Serra de Tramuntana", last: { year: 2025, dist: 138, gain: 5350, tref: 45243.96 } },
     { group: "Festival des Templiers", id: "boffi", name: "Boffi Fifty", last: { year: 2026, dist: 46.56, gain: 1995, tref: 12470.91 } },
     { group: "Chamonix · UTMB Mont-Blanc", id: "utmb", name: "UTMB", last: { year: 2026, dist: 171, gain: 9700, tref: 65324.77 } },
     { group: "Chamonix · UTMB Mont-Blanc", id: "ccc", name: "CCC", last: { year: 2026, dist: 107.2, gain: 6155, tref: 35830.1 } },
@@ -518,9 +548,30 @@
     { group: "Autre", id: "custom", name: "Autre course (saisie libre)", last: { year: null, dist: 42, gain: 1500, tref: null } },
   ];
 
+  const CATALOGUE = globalThis.LIVETRAIL_CATALOGUE?.events ?? [];
+  const clockOf = iso => (iso && iso.length >= 16 ? iso.slice(11, 16) : null);
+  const NOT_SCORED = /relais|relay|\bduo\b|team|[ée]quipe|marche|nordi[cq]|walk|rando|hike|hiking|enfant|kids|famil|poussin|benjamin|minime/i;
+  const scored = r => !NOT_SCORED.test(r.name) && r.km + (r.dplus ?? 0) / 100 >= 5;
+  const fromCatalogue = CATALOGUE.flatMap(e => e.races.filter(scored).map(r => ({
+    id: `lt:${e.id}:${r.id}`, lt: `${e.id}:${r.id}`, group: e.name, upcoming: e.upcoming, date: (r.start || e.date).slice(0, 10),
+    name: `${e.name} · ${r.name}`, start: clockOf(r.start), checkpoints: r.checkpoints?.length > 2 ? r.checkpoints : null,
+    last: { year: null, dist: r.km, gain: r.dplus ?? 0, tref: null },
+    note: e.upcoming
+      ? `Parcours LiveTrail ${e.year}. Le D+ qui compte pour ITRA est celui du site de la course : corrige-le à l'étape 3 s'il diffère.`
+      : `Parcours de l'édition ${e.year}, le dernier publié sur LiveTrail. Corrige-le à l'étape 3 s'il change.`,
+  })));
+  for (const preset of RACES) {
+    const match = preset.lt && fromCatalogue.find(c => c.lt === preset.lt);
+    if (match) Object.assign(preset, { checkpoints: preset.checkpoints ?? match.checkpoints, start: preset.start ?? match.start, date: match.date, upcoming: match.upcoming });
+  }
+  const ALL_RACES = [...RACES, ...fromCatalogue.filter(c => !RACES.some(p => p.lt === c.lt))];
+  const raceById = new Map(ALL_RACES.map(r => [r.id, r]));
+  let selectedRaceId = "vv52";
+  const currentRace = () => raceById.get(selectedRaceId) ?? RACES[0];
+
   const $ = id => document.getElementById(id);
   const els = {
-    race: $("race"), raceNote: $("race-note"), lastDist: $("last-dist"), lastGain: $("last-gain"),
+    race: $("race"), results: $("race-results"), raceNote: $("race-note"), lastDist: $("last-dist"), lastGain: $("last-gain"),
     knownTime: $("known-time"), knownScore: $("known-score"), derived: $("derived"),
     nextDist: $("next-dist"), nextGain: $("next-gain"), chip: $("course-chip"),
     scoreRange: $("score-range"), score: $("score"), presets: $("presets"),
@@ -597,18 +648,30 @@
     return { same: false, noHistory: true, ratio: 1, mid, strict: mid * (1 - BAND_NO_HISTORY), lenient: mid * (1 + BAND_NO_HISTORY), band: BAND_NO_HISTORY };
   }
 
-  function fillRaces() {
-    const groups = new Map();
-    for (const race of RACES) {
-      if (!groups.has(race.group)) {
-        const og = document.createElement("optgroup"); og.label = race.group; groups.set(race.group, og); els.race.append(og);
-      }
-      const opt = document.createElement("option"); opt.value = race.id; opt.textContent = race.name; groups.get(race.group).append(opt);
-    }
+  const normalize = s => String(s).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+  const escapeHtml = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+  function raceMeta(r) {
+    const next = r.next || { dist: r.last.dist, gain: r.last.gain };
+    const date = r.date ? new Date(`${r.date}T12:00:00`).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" }) : null;
+    const tag = r.last.tref ? `<span class="tag">historique ITRA</span>` : r.upcoming === false ? "édition passée" : null;
+    return [`${next.dist} km · ${next.gain} m D+`, date, tag].filter(Boolean).join(" · ");
+  }
+
+  function showResults(query) {
+    const words = normalize(query).split(/\s+/).filter(Boolean);
+    const pool = ALL_RACES.filter(r => r.id !== "custom" && (words.length
+      ? words.every(w => normalize(`${r.name} ${r.group ?? ""}`).includes(w))
+      : r.last.tref));
+    const ranked = [...pool].sort((a, b) => (b.last.tref ? 1 : 0) - (a.last.tref ? 1 : 0) || (b.upcoming ? 1 : 0) - (a.upcoming ? 1 : 0));
+    els.results.innerHTML = ranked.slice(0, 8).map(r => `<button type="button" class="race-option" role="option" data-id="${r.id}"><strong>${escapeHtml(r.name)}</strong><small>${raceMeta(r)}</small></button>`).join("")
+      + `<button type="button" class="race-option" role="option" data-id="custom"><strong>Ma course n'est pas dans la liste</strong><small>Tu saisis toi-même la distance et le D+</small></button>`;
   }
 
   function loadRace(id) {
-    const race = RACES.find(r => r.id === id);
+    selectedRaceId = raceById.has(id) ? id : "custom";
+    const race = currentRace();
+    els.race.value = race.id === "custom" ? "Autre course" : race.name;
     const next = race.next || { dist: race.last.dist, gain: race.last.gain };
     els.lastDist.value = race.last.dist;
     els.lastGain.value = race.last.gain;
@@ -616,8 +679,9 @@
     els.nextGain.value = next.gain;
     els.knownTime.value = "";
     els.knownScore.value = "";
+    $("fs-history").hidden = Boolean(race.last.tref);
     els.raceNote.textContent = race.id === "custom"
-      ? "Le parcours se trouve sur le site de la course ; le temps et le score, sur ta fiche ITRA."
+      ? "Renseigne le parcours à l'étape 3, à partir du site de la course."
       : race.note ?? `Parcours supposé identique à l'édition ${race.last.year}, modifie-le à l'étape 3 s'il change.`;
     render();
   }
@@ -631,18 +695,14 @@
   }
 
   function currentTref() {
-    const race = RACES.find(r => r.id === els.race.value);
+    const race = currentRace();
     const fromResult = resultTref();
     if (fromResult) {
-      els.derived.textContent = `Temps qui valait 1000 points l'an dernier : ${formatTime(Math.round(fromResult.mid))} (à ±${(50 / fromResult.score).toFixed(2)} % près), calculé depuis ce résultat.`;
+      els.derived.textContent = "Résultat pris en compte : le chrono s'appuie maintenant sur cette édition.";
       return fromResult.mid;
     }
-    if (race.last.tref) {
-      els.derived.textContent = `Pas besoin de résultat ici : le temps qui valait 1000 points en ${race.last.year} est connu (${formatTime(Math.round(race.last.tref))}). Un résultat saisi le remplace.`;
-      return race.last.tref;
-    }
-    els.derived.textContent = "Sans résultat de l'an dernier, le chrono est estimé à partir du seul parcours (environ ±4 %). Ajoute un temps et un score pour une prévision fiable.";
-    return null;
+    els.derived.textContent = "";
+    return race.last.tref ?? null;
   }
 
   function setScore(value) {
@@ -654,7 +714,7 @@
   }
 
   function render() {
-    const race = RACES.find(r => r.id === els.race.value);
+    const race = currentRace();
     const score = setScore(els.score.value);
     const last = { dist: Number(els.lastDist.value), gain: Number(els.lastGain.value), tref: currentTref() };
     const next = { dist: Number(els.nextDist.value), gain: Number(els.nextGain.value) };
@@ -984,13 +1044,20 @@
   sc.table.addEventListener("click", e => {
     const b = e.target.closest("button[data-race]");
     if (!b) return;
-    els.race.value = b.dataset.race; loadRace(b.dataset.race); showView("chrono");
+    loadRace(b.dataset.race); showView("chrono");
   });
   showView({ "#cote": "cote", "#profil": "profil", "#scorer": "profil" }[location.hash] ?? "chrono");
   renderCote();
 
-  fillRaces();
-  els.race.addEventListener("change", () => loadRace(els.race.value));
+  els.race.addEventListener("focus", () => { els.race.select(); showResults(""); });
+  els.race.addEventListener("input", () => showResults(els.race.value));
+  els.results.addEventListener("click", e => {
+    const b = e.target.closest("button[data-id]");
+    if (!b) return;
+    loadRace(b.dataset.id);
+    els.results.innerHTML = "";
+  });
+  document.addEventListener?.("click", e => { if (!e.target.closest(".fs-course")) els.results.innerHTML = ""; });
   els.scoreRange.addEventListener("input", () => { els.score.value = els.scoreRange.value; render(); });
   els.score.addEventListener("change", render);
   els.score.addEventListener("input", () => { if (Number(els.score.value) >= 100) render(); });
@@ -998,7 +1065,6 @@
   for (const el of [els.lastDist, els.lastGain, els.nextDist, els.nextGain, els.knownTime, els.knownScore]) el.addEventListener("input", render);
   document.getElementById("form").addEventListener("submit", e => e.preventDefault());
 
-  els.race.value = "vv52";
   els.score.value = 600;
   loadRace("vv52");
 </script>

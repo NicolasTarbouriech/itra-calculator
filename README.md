@@ -12,6 +12,16 @@ Version en ligne (privée, même lien) : https://claude.ai/artifact/YMXuMg4Fu7UY
 
 `index.html` est autonome : ouvre-le dans un navigateur. Seules les polices viennent de Google Fonts.
 
+## Mettre à jour le catalogue des courses
+
+La recherche « Cherche ta course » s'appuie sur `catalogue.js`, généré à partir de l'API publique de LiveTrail : les événements à venir (avec leurs points de passage) et ceux de l'année écoulée (avec distance et D+).
+
+```bash
+python3 scripts/catalogue_livetrail.py        # 400 jours d'historique par défaut
+```
+
+Le D+ retenu est celui qu'annonce LiveTrail en tête de course, en général le chiffre de l'organisateur. ITRA utilise le chiffre déclaré par l'organisateur : en cas d'écart, c'est celui du site de la course qui compte, jamais le cumul GPS de la trace.
+
 ## Vérifier les calculs
 
 ```bash
@@ -35,6 +45,8 @@ Le détail complet de la recherche (méthode, chiffres, cas étudiés, limites) 
 | Dossier | Contenu |
 |---|---|
 | `index.html` | La page (HTML, CSS et JavaScript en un fichier) |
+| `catalogue.js` | Catalogue des courses LiveTrail, chargé par la page |
+| `scripts/catalogue_livetrail.py` | Génère `catalogue.js` |
 | `analyse/itra_model.py` | Réimplémentation du score et de la cote |
 | `analyse/itra_target.py` | Prévision du T_ref et du chrono à viser |
 | `analyse/analyse_utmb.py` | Analyse UTMB/CCC/OCC/TDS/MCC 2021-2026 : répétants, météo, courbe km-effort |
