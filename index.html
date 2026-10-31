@@ -123,7 +123,9 @@
     #view-cote .bib-wrap { order: 2; }
     #view-cote .fs-pi-results { order: 3; }
   }
-  .big-num { font-size: 26px; font-weight: 700; padding: 6px 12px; }
+  .big-num { font-size: 26px; font-weight: 700; padding: 6px 12px; max-width: 200px; }
+  .secondary-field { font-size: 12.5px; font-weight: 500; color: var(--muted); border-top: 1px solid var(--line); padding-top: 12px; }
+  .secondary-field input { max-width: 200px; font-size: 13px; padding: 6px 8px; }
   .bib {
     position: relative; background: var(--bib-bg); color: var(--bib-fg); border-radius: 6px;
     border: 1px solid var(--bib-line); padding: 26px 24px 20px; display: grid; gap: 14px;
@@ -389,14 +391,9 @@
         <fieldset class="fs-pi-goal">
           <legend><span class="step">1</span> Objectif</legend>
           <div class="group">
-            <div class="row">
-              <label for="pi-goal">Cote visée
-                <input id="pi-goal" class="num big-num" type="number" min="100" max="1000" step="1" inputmode="numeric">
-              </label>
-              <label for="sim-date">Date de ta prochaine course
-                <input id="sim-date" class="num" type="date">
-              </label>
-            </div>
+            <label for="pi-goal">Cote visée
+              <input id="pi-goal" class="num big-num" type="number" min="100" max="1000" step="1" inputmode="numeric">
+            </label>
             <div class="presets" id="pi-presets" role="group" aria-label="Cotes courantes">
               <button type="button" data-goal="600">600</button>
               <button type="button" data-goal="650">650</button>
@@ -404,6 +401,9 @@
               <button type="button" data-goal="750">750</button>
               <button type="button" data-goal="800">800</button>
             </div>
+            <label for="sim-date" class="secondary-field">Date de la course <span class="hint">ne change le score que pour une petite hausse : tes anciens résultats perdent du poids en vieillissant</span>
+              <input id="sim-date" class="num" type="date">
+            </label>
           </div>
         </fieldset>
         <fieldset class="fs-pi-results">
@@ -1176,7 +1176,7 @@
   const todayKey = new Date().toISOString().slice(0, 10);
   pe.results.value = MY_RESULTS.map(([d, s, n, km, dp]) => `${d} ; ${s} ; ${n} ; ${km} ; ${dp}`).join("\n");
   pe.asOf.value = todayKey < "2026-10-30" ? "2026-10-30" : todayKey;
-  pe.simDate.value = pe.asOf.value < "2026-11-07" ? "2026-11-07" : pe.asOf.value;
+  pe.simDate.value = dayKey(addMonths(parseDay(pe.asOf.value), 1));
   pe.goal.value = 670;
   for (const el of [pe.results, pe.asOf, pe.simDate, pe.goal]) el.addEventListener("input", renderCote);
   pe.goalUse.addEventListener("click", () => { els.score.value = pe.goalUse.dataset.score; showView("chrono"); render(); });

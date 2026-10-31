@@ -37,9 +37,12 @@ els.race.value = "vv52";
 loadRace("vv52");
 
 pe.asOf.value = "2026-10-30";
+pe.simDate.value = "2026-11-07";
+pe.goal.value = "700";
 renderCote();
 assert.equal(String(pe.now.textContent), "655", "cote générale publiée par ITRA le 30/10/2026");
 assert.equal(pe.min.textContent, "645", "score minimum pour faire monter la cote le 07/11/2026");
+assert.equal(String(pe.need.textContent), "722", "score à faire le 07/11/2026 pour passer à 700");
 
 renderProfil();
 assert.equal(pf.headline.textContent, "Plus fort dès que ça grimpe");
