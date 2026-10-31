@@ -19,7 +19,7 @@ from pathlib import Path
 API = "https://api.v3.livetrail.net/api"
 PAUSE_S = 0.4
 OUTPUT = Path(__file__).resolve().parent.parent / "catalogue.js"
-NOT_SCORED = re.compile(r"relais|relay|\bduo\b|team|[ée]quipe|marche|nordi[cq]|walk|rando|hike|hiking|enfant|kids|famil|poussin|benjamin|minime", re.IGNORECASE)
+NOT_SCORED = re.compile(r"relais|relay|\bduo\b|\bptl\b|team|[ée]quipe|marche|nordi[cq]|walk|rando|hike|hiking|enfant|kids|famil|poussin|benjamin|minime", re.IGNORECASE)
 
 
 def get(path: str, tenant: str | None = None):

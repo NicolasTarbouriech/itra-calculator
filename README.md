@@ -12,6 +12,10 @@ Version en ligne (privée, même lien) : https://claude.ai/artifact/YMXuMg4Fu7UY
 
 `index.html` est autonome : ouvre-le dans un navigateur. Seules les polices viennent de Google Fonts.
 
+## Base de résultats partagés
+
+La page publiée déclare une base partagée (collection `contributions`, un document par coureur, que lui seul peut écrire ; le propriétaire de la page peut modérer). Quand un coureur saisit le temps et le score d'une édition passée d'une course sans historique, il peut les partager : la page en déduit le temps de référence, rejette les valeurs hors de 0,7 à 1,4 fois l'estimation par le parcours et retient, pour chaque course, l'édition la plus récente (médiane si plusieurs coureurs ont partagé la même). Ouverte en local, la page fonctionne sans cette base.
+
 ## Mettre à jour le catalogue des courses
 
 La recherche « Cherche ta course » s'appuie sur `catalogue.js`, généré à partir de l'API publique de LiveTrail : les événements à venir (avec leurs points de passage) et ceux de l'année écoulée (avec distance et D+).
@@ -37,7 +41,7 @@ Le détail complet de la recherche (méthode, chiffres, cas étudiés, limites) 
 - **Score de course** = ⌊1000 × T_ref / temps⌋, avec un T_ref par édition, identique pour les hommes et les femmes. Vérifié sur environ 45 000 résultats.
 - **Cote** = ⌊meilleur des 5 scénarios de la FAQ ITRA⌋, avec des poids selon l'âge des résultats (en mois pleins) et selon le nombre de courses. Reproduit au point près les 4 cotes publiées de Nicolas.
 - **T_ref d'une année sur l'autre** : reporté quand le parcours déclaré est identique (écart médian 0,3 %) ; recalculé quand le parcours change (pente 0,51 par rapport aux conditions réelles). La météo n'est presque jamais compensée.
-- **Prévision du T_ref** : erreur médiane de 0,23 % si le parcours est inchangé, de 1,5 % s'il change. Marge de sécurité de 1 % ou 3,3 %.
+- **Prévision du T_ref** : reporté si le parcours est inchangé (erreur médiane 0,23 %), proportionnel au km-effort s'il change (écart-type 1,6 % sur 16 paires hors Chamonix). Marge de sécurité de 1 % ou 3 %, tenue environ 9 fois sur 10.
 - **Allure par point de passage** : part du temps = (part de « km + D+/55 »)^1,134, ajustée sur 7 456 finishers LiveTrail de la Veni Vici 2025. Erreur moyenne de 1,3 point de %.
 
 ## Contenu

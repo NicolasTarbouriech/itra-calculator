@@ -115,10 +115,9 @@
     .bib-wrap { position: static; order: -1; }
     #view-chrono .layout > form { display: contents; }
     #view-chrono .fs-course { order: 1; }
-    #view-chrono .fs-goal { order: 2; }
-    #view-chrono .bib-wrap { order: 3; }
-    #view-chrono .fs-history { order: 4; }
-    #view-chrono .fs-next { order: 5; }
+    #view-chrono .fs-history { order: 2; }
+    #view-chrono .fs-goal { order: 3; }
+    #view-chrono .bib-wrap { order: 4; }
   }
   .bib {
     position: relative; background: var(--bib-bg); color: var(--bib-fg); border-radius: 6px;
@@ -172,8 +171,20 @@
   .race-option:hover, .race-option:focus-visible { border-color: var(--accent); }
   .race-option small { color: var(--muted); font-size: 12px; }
   .race-option .tag { color: var(--safe); font-weight: 600; }
+  .course-line { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; font-size: 14px; font-weight: 600; }
+  .link { font: inherit; font-size: 13px; font-weight: 600; color: var(--accent); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+  .course-fields { display: grid; gap: 12px; }
+  .custom-open { justify-self: start; text-align: left; }
   .callout { background: var(--warn-soft); border-color: transparent; }
   .callout-title { font-size: 15px; }
+  .share { display: grid; grid-template-columns: 110px auto; justify-content: start; align-items: end; gap: 8px 12px; border-top: 1px solid var(--line); padding-top: 12px; }
+  .share .fine { grid-column: 1 / -1; }
+  .share-status:empty { display: none; }
+  .share-btn {
+    font: inherit; font-size: 14px; font-weight: 600; border: 1px solid var(--accent); background: var(--accent); color: var(--bib-bg);
+    border-radius: 999px; padding: 8px 16px; cursor: pointer;
+  }
+  .share-btn:disabled { opacity: .5; cursor: default; }
   .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   @media (max-width: 480px) { th, td { padding: 7px 8px; } }
   tr.is-target td:first-child { color: var(--accent); }
@@ -241,30 +252,23 @@
         <legend><span class="step">1</span> Course</legend>
         <div class="group">
           <label for="race">Cherche ta course
-            <input id="race" type="search" placeholder="Veni Vici, Mallorca, Saintélyon…" autocomplete="off" spellcheck="false">
+            <input id="race" type="search" placeholder="Touche pour les courses à venir, ou tape un nom" autocomplete="off" spellcheck="false">
           </label>
+          <button type="button" class="link custom-open" id="custom-open">Course introuvable ? Saisis-la toi-même</button>
           <div class="race-results" id="race-results" role="listbox" aria-label="Courses trouvées"></div>
           <span class="fine" id="race-note"></span>
-        </div>
-      </fieldset>
-
-      <fieldset class="fs-goal">
-        <legend><span class="step">2</span> Objectif</legend>
-        <div class="group">
-          <div class="score-pick">
-            <label for="score-range">Score de course visé
-              <input id="score-range" type="range" min="300" max="950" step="1">
+          <span class="fine" id="shared-note" hidden>Résultats partagés injoignables pour l'instant : le chrono s'appuie sur les données intégrées.</span>
+          <div class="course-line" id="course-line"><span id="course-summary"></span><button type="button" class="link" id="course-edit">modifier</button></div>
+          <div class="course-fields" id="course-fields" hidden>
+            <div class="row">
+            <label for="next-dist">Distance annoncée <span class="hint">km, site de la course</span>
+              <input id="next-dist" class="num" type="number" step="0.01" min="1" inputmode="decimal">
             </label>
-            <label for="score">Points
-              <input id="score" class="num" type="number" min="100" max="1000" step="1" inputmode="numeric">
+            <label for="next-gain">D+ annoncé <span class="hint">m</span>
+              <input id="next-gain" class="num" type="number" step="1" min="0" inputmode="numeric">
             </label>
           </div>
-          <div class="presets" id="presets" role="group" aria-label="Scores courants">
-            <button type="button" data-score="500">500</button>
-            <button type="button" data-score="600">600</button>
-            <button type="button" data-score="650">650</button>
-            <button type="button" data-score="700">700</button>
-            <button type="button" data-score="750">750</button>
+          <span class="chip same" id="course-chip">Parcours identique</span>
           </div>
         </div>
       </fieldset>
@@ -291,23 +295,43 @@
             </label>
           </div>
           <span class="derived" id="derived"></span>
+          <div class="share" id="share-box" hidden>
+            <label for="share-year">Édition
+              <input id="share-year" class="num" type="number" min="2000" step="1" inputmode="numeric">
+            </label>
+            <button type="button" class="share-btn" id="share-btn">Partager ce résultat</button>
+            <span class="fine">Il servira aux prochains coureurs de cette course : seuls la course, l'édition, le parcours, le temps et le score sont enregistrés.</span>
+            <span class="fine share-status" id="share-status" aria-live="polite"></span>
+          </div>
         </div>
       </fieldset>
 
-      <fieldset class="fs-next">
-        <legend><span class="step">3</span> Prochaine édition</legend>
+      <fieldset class="fs-goal">
+        <legend><span class="step">2</span> Objectif</legend>
         <div class="group">
-          <div class="row">
-            <label for="next-dist">Distance annoncée <span class="hint">km, site de la course</span>
-              <input id="next-dist" class="num" type="number" step="0.01" min="1" inputmode="decimal">
+          <div class="score-pick">
+            <label for="score-range">Score de course visé
+              <input id="score-range" type="range" min="300" max="950" step="1">
             </label>
-            <label for="next-gain">D+ annoncé <span class="hint">m</span>
-              <input id="next-gain" class="num" type="number" step="1" min="0" inputmode="numeric">
+            <label for="score">Points
+              <input id="score" class="num" type="number" min="100" max="1000" step="1" inputmode="numeric">
             </label>
           </div>
-          <span class="chip same" id="course-chip">Parcours identique</span>
+          <div class="presets" id="presets" role="group" aria-label="Scores courants">
+            <button type="button" data-score="450">450</button>
+            <button type="button" data-score="500">500</button>
+            <button type="button" data-score="550">550</button>
+            <button type="button" data-score="600">600</button>
+            <button type="button" data-score="650">650</button>
+            <button type="button" data-score="700">700</button>
+            <button type="button" data-score="750">750</button>
+            <button type="button" data-score="800">800</button>
+            <button type="button" data-score="850">850</button>
+            <button type="button" data-score="900">900</button>
+          </div>
         </div>
       </fieldset>
+
     </form>
 
     <div class="bib-wrap">
@@ -505,10 +529,11 @@
 
 <script src="catalogue.js"></script>
 <script>
-  const EXPONENT = 1.27;
+  const EXPONENT = 1;
   const DRIFT_SAME = -0.003;
+  const DRIFT_CHANGED = -0.005;
   const BAND_SAME = 0.010;
-  const BAND_CHANGED = 0.033;
+  const BAND_CHANGED = 0.025;
   const BAND_NO_HISTORY = 0.07;
   const GENERIC_SCALE_S = 68.05;
   const GENERIC_EXPONENT = 1.235;
@@ -532,12 +557,12 @@
     { group: "Mallorca by UTMB", id: "mal-etm", lt: "mallorcabyutmb:etm", name: "Mallorca by UTMB · ETM Els Tres Mils", last: { year: 2025, dist: 56, gain: 2450, tref: 16522.4 } },
     { group: "Mallorca by UTMB", id: "mal-cps", lt: "mallorcabyutmb:cps", name: "Mallorca by UTMB · CPS Camins de Pedra en Sec", last: { year: 2025, dist: 104, gain: 3470, tref: 31095.37 } },
     { group: "Mallorca by UTMB", id: "mal-sdt", lt: "mallorcabyutmb:sdt", name: "Mallorca by UTMB · SDT Serra de Tramuntana", last: { year: 2025, dist: 138, gain: 5350, tref: 45243.96 } },
-    { group: "Festival des Templiers", id: "boffi", name: "Boffi Fifty", last: { year: 2026, dist: 46.56, gain: 1995, tref: 12470.91 } },
-    { group: "Chamonix · UTMB Mont-Blanc", id: "utmb", name: "UTMB", last: { year: 2026, dist: 171, gain: 9700, tref: 65324.77 } },
-    { group: "Chamonix · UTMB Mont-Blanc", id: "ccc", name: "CCC", last: { year: 2026, dist: 107.2, gain: 6155, tref: 35830.1 } },
-    { group: "Chamonix · UTMB Mont-Blanc", id: "tds", name: "TDS", last: { year: 2026, dist: 154.4, gain: 9700, tref: 63847.27 } },
-    { group: "Chamonix · UTMB Mont-Blanc", id: "occ", name: "OCC", last: { year: 2026, dist: 60.52, gain: 3410, tref: 17847.86 } },
-    { group: "Chamonix · UTMB Mont-Blanc", id: "mcc", name: "MCC", last: { year: 2026, dist: 38.6, gain: 2310, tref: 11131.41 } },
+    { group: "Festival des Templiers", id: "boffi", lt: "templiers:Boffi50", name: "Boffi Fifty", last: { year: 2026, dist: 46.56, gain: 1995, tref: 12470.91 } },
+    { group: "Chamonix · UTMB Mont-Blanc", id: "utmb", lt: "utmb:utmb", name: "UTMB", last: { year: 2026, dist: 171, gain: 9700, tref: 65324.77 } },
+    { group: "Chamonix · UTMB Mont-Blanc", id: "ccc", lt: "utmb:ccc", name: "CCC", last: { year: 2026, dist: 107.2, gain: 6155, tref: 35830.1 } },
+    { group: "Chamonix · UTMB Mont-Blanc", id: "tds", lt: "utmb:tds", name: "TDS", last: { year: 2026, dist: 154.4, gain: 9700, tref: 63847.27 } },
+    { group: "Chamonix · UTMB Mont-Blanc", id: "occ", lt: "utmb:occ", name: "OCC", last: { year: 2026, dist: 60.52, gain: 3410, tref: 17847.86 } },
+    { group: "Chamonix · UTMB Mont-Blanc", id: "mcc", lt: "utmb:mcc", name: "MCC", last: { year: 2026, dist: 38.6, gain: 2310, tref: 11131.41 } },
     { group: "Courses locales", id: "graal", name: "Trail le Graal (Brocéliande)", last: { year: 2026, dist: 26, gain: 700, tref: 4757.6 } },
     { group: "Courses locales", id: "guerledan", name: "Trail de Guerlédan", last: { year: 2026, dist: 66.15, gain: 2369, tref: 17749.87 } },
     { group: "Courses locales", id: "citadelles", name: "Trail des Citadelles 40 km", last: { year: 2026, dist: 39, gain: 2000, tref: 10223.33 } },
@@ -550,15 +575,15 @@
 
   const CATALOGUE = globalThis.LIVETRAIL_CATALOGUE?.events ?? [];
   const clockOf = iso => (iso && iso.length >= 16 ? iso.slice(11, 16) : null);
-  const NOT_SCORED = /relais|relay|\bduo\b|team|[ée]quipe|marche|nordi[cq]|walk|rando|hike|hiking|enfant|kids|famil|poussin|benjamin|minime/i;
+  const NOT_SCORED = /relais|relay|\bduo\b|\bptl\b|team|[ée]quipe|marche|nordi[cq]|walk|rando|hike|hiking|enfant|kids|famil|poussin|benjamin|minime/i;
   const scored = r => !NOT_SCORED.test(r.name) && r.km + (r.dplus ?? 0) / 100 >= 5;
   const fromCatalogue = CATALOGUE.flatMap(e => e.races.filter(scored).map(r => ({
     id: `lt:${e.id}:${r.id}`, lt: `${e.id}:${r.id}`, group: e.name, upcoming: e.upcoming, date: (r.start || e.date).slice(0, 10),
     name: `${e.name} · ${r.name}`, start: clockOf(r.start), checkpoints: r.checkpoints?.length > 2 ? r.checkpoints : null,
     last: { year: null, dist: r.km, gain: r.dplus ?? 0, tref: null },
     note: e.upcoming
-      ? `Parcours LiveTrail ${e.year}. Le D+ qui compte pour ITRA est celui du site de la course : corrige-le à l'étape 3 s'il diffère.`
-      : `Parcours de l'édition ${e.year}, le dernier publié sur LiveTrail. Corrige-le à l'étape 3 s'il change.`,
+      ? `Parcours LiveTrail ${e.year}. Le D+ qui compte pour ITRA est celui du site de la course : corrige-le s'il diffère.`
+      : `Parcours de l'édition ${e.year}, le dernier publié sur LiveTrail. Corrige-le s'il change.`,
   })));
   for (const preset of RACES) {
     const match = preset.lt && fromCatalogue.find(c => c.lt === preset.lt);
@@ -567,12 +592,110 @@
   const ALL_RACES = [...RACES, ...fromCatalogue.filter(c => !RACES.some(p => p.lt === c.lt))];
   const raceById = new Map(ALL_RACES.map(r => [r.id, r]));
   let selectedRaceId = "vv52";
+  let typedQuery = "", customName = "";
   const currentRace = () => raceById.get(selectedRaceId) ?? RACES[0];
+
+  const SHARED_PLAUSIBLE_RATIO = [0.7, 1.4];
+  const raceKey = r => r.lt ?? r.id;
+  const sharedEditions = new Map();
+  const shared = { db: null, uid: null, mine: [], writable: false };
+  const lastEdition = r => {
+    const s = sharedEditions.get(raceKey(r));
+    return s && (!r.last.tref || s.year > r.last.year) ? s : r.last;
+  };
+  const nextCourse = r => r.next ?? (r.id.startsWith("lt:") ? r.last : lastEdition(r));
+  const median = values => {
+    const s = [...values].sort((a, b) => a - b), m = s.length >> 1;
+    return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+  };
+
+  function plausibleTref(dist, gain, tref) {
+    const ratio = tref / (GENERIC_SCALE_S * Math.pow(kmEffort(dist, gain), GENERIC_EXPONENT));
+    return ratio > SHARED_PLAUSIBLE_RATIO[0] && ratio < SHARED_PLAUSIBLE_RATIO[1];
+  }
+
+  const isEdition = e => e && typeof e.race === "string" && Number.isInteger(e.year)
+    && [e.dist, e.gain, e.tref].every(Number.isFinite) && e.dist > 0 && e.gain >= 0 && plausibleTref(e.dist, e.gain, e.tref);
+
+  function collectShared(docs) {
+    const resultsOf = doc => { const r = doc.data()?.results; return Array.isArray(r) ? r : []; };
+    const mine = docs.find(d => d.id === shared.uid);
+    shared.mine = mine ? resultsOf(mine) : [];
+    const editions = new Map();
+    for (const e of docs.flatMap(resultsOf).filter(isEdition)) {
+      const key = [e.race, e.year, e.dist, e.gain].join("|");
+      if (!editions.has(key)) editions.set(key, { race: e.race, year: e.year, dist: e.dist, gain: e.gain, trefs: [] });
+      editions.get(key).trefs.push(e.tref);
+    }
+    sharedEditions.clear();
+    for (const { race, trefs, ...edition } of editions.values()) {
+      const best = sharedEditions.get(race);
+      if (best && (best.year > edition.year || (best.year === edition.year && best.contributors >= trefs.length))) continue;
+      sharedEditions.set(race, { ...edition, tref: median(trefs), contributors: trefs.length, shared: true });
+    }
+    if (!els.knownTime.value && !els.knownScore.value) applyHistory(currentRace());
+    render();
+  }
+
+  async function connectShared() {
+    const runtime = globalThis.claude;
+    if (!runtime?.use) return;
+    const [db, user] = await Promise.all([runtime.use("db"), runtime.use("user")]);
+    if (!db) return;
+    shared.db = db;
+    shared.uid = user ? await user.id() : null;
+    shared.writable = Boolean(shared.uid) && (user ? await user.can("data.write") : null) !== false;
+    render();
+    const timer = setTimeout(() => { els.sharedNote.hidden = false; }, 10000);
+    const settle = () => { clearTimeout(timer); els.sharedNote.hidden = true; };
+    db.collection("contributions").limit(1000).onSnapshot(snap => {
+      if (!snap.metadata.fromCache) settle();
+      collectShared(snap.docs);
+    }, settle);
+  }
+
+  async function shareResult() {
+    const race = currentRace();
+    const result = resultTref();
+    const year = Number(els.shareYear.value);
+    const dist = Number(els.lastDist.value), gain = Number(els.lastGain.value);
+    const say = text => { els.shareStatus.textContent = text; };
+    if (!result || !(dist > 0 && gain >= 0) || !(Number.isInteger(year) && year >= 2000 && year <= new Date().getFullYear())) {
+      return say("Renseigne le temps, le score, l'édition et le parcours de cette année-là.");
+    }
+    if (!plausibleTref(dist, gain, result.mid)) {
+      return say("Ce résultat s'écarte trop de ce que donne le parcours : vérifie le temps (h:mm:ss), le score et le parcours de cette année-là.");
+    }
+    const entry = { race: raceKey(race), name: race.name, year, dist, gain, time: parseTime(els.knownTime.value), score: result.score, tref: Math.round(result.mid * 100) / 100, sharedOn: dayOffset(0) };
+    const results = [...shared.mine.filter(e => !(e.race === entry.race && e.year === year)), entry];
+    const write = () => shared.db.doc(`contributions/${shared.uid}`).set({ results });
+    const retryOnce = error => error?.code === "unavailable" ? new Promise(r => setTimeout(r, 500 + Math.random() * 1000)).then(write) : Promise.reject(error);
+    els.shareBtn.disabled = true;
+    say("Envoi…");
+    try {
+      await write().catch(retryOnce);
+      shared.mine = results;
+      say(`Merci ! Ton résultat ${year} servira aux prochains coureurs de cette course.`);
+    } catch (error) {
+      if (["invalid_argument", "not_granted", "revoked"].includes(error?.code)) {
+        shared.writable = false;
+        say("Le partage n'est pas ouvert à ton compte sur cette page : ton résultat sert quand même à ton chrono.");
+      } else if (error?.code === "quota_exceeded") {
+        say("La base partagée est pleine : ton résultat sert quand même à ton chrono.");
+      } else {
+        say("Envoi impossible pour l'instant, réessaie dans un moment.");
+      }
+    } finally {
+      els.shareBtn.disabled = false;
+    }
+  }
 
   const $ = id => document.getElementById(id);
   const els = {
-    race: $("race"), results: $("race-results"), raceNote: $("race-note"), lastDist: $("last-dist"), lastGain: $("last-gain"),
-    knownTime: $("known-time"), knownScore: $("known-score"), derived: $("derived"),
+    race: $("race"), results: $("race-results"), raceNote: $("race-note"),
+    courseLine: $("course-line"), courseSummary: $("course-summary"), courseEdit: $("course-edit"), courseFields: $("course-fields"), lastDist: $("last-dist"), lastGain: $("last-gain"),
+    knownTime: $("known-time"), knownScore: $("known-score"), derived: $("derived"), customOpen: $("custom-open"),
+    sharedNote: $("shared-note"), shareBox: $("share-box"), shareYear: $("share-year"), shareBtn: $("share-btn"), shareStatus: $("share-status"),
     nextDist: $("next-dist"), nextGain: $("next-gain"), chip: $("course-chip"),
     scoreRange: $("score-range"), score: $("score"), presets: $("presets"),
     bibRace: $("bib-race"), bibCourse: $("bib-course"), tSafe: $("t-safe"), tReliability: $("t-reliability"), tMargin: $("t-margin"), tExplain: $("t-explain"),
@@ -638,7 +761,7 @@
   function forecast(last, next) {
     const same = Math.abs(last.dist - next.dist) < 1e-9 && Math.abs(last.gain - next.gain) < 1e-9;
     const ratio = kmEffort(next.dist, next.gain) / kmEffort(last.dist, last.gain);
-    const mid = same ? last.tref * (1 + DRIFT_SAME) : last.tref * Math.pow(ratio, EXPONENT);
+    const mid = same ? last.tref * (1 + DRIFT_SAME) : last.tref * Math.pow(ratio, EXPONENT) * (1 + DRIFT_CHANGED);
     const band = same ? BAND_SAME : BAND_CHANGED;
     return { same, ratio, mid, strict: mid * (1 - band), lenient: mid * (1 + band), band };
   }
@@ -652,38 +775,78 @@
   const escapeHtml = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
   function raceMeta(r) {
-    const next = r.next || { dist: r.last.dist, gain: r.last.gain };
+    const next = nextCourse(r);
+    const last = lastEdition(r);
     const date = r.date ? new Date(`${r.date}T12:00:00`).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" }) : null;
-    const tag = r.last.tref ? `<span class="tag">historique ITRA</span>` : r.upcoming === false ? "édition passée" : null;
+    const tag = last.tref ? `<span class="tag">${last.shared ? "historique partagé" : "historique ITRA"}</span>` : r.upcoming === false ? "édition passée" : null;
     return [`${next.dist} km · ${next.gain} m D+`, date, tag].filter(Boolean).join(" · ");
+  }
+
+  function dayOffset(days) {
+    const d = new Date(); d.setDate(d.getDate() + days);
+    return d.toISOString().slice(0, 10);
   }
 
   function showResults(query) {
     const words = normalize(query).split(/\s+/).filter(Boolean);
-    const pool = ALL_RACES.filter(r => r.id !== "custom" && (words.length
-      ? words.every(w => normalize(`${r.name} ${r.group ?? ""}`).includes(w))
-      : r.last.tref));
-    const ranked = [...pool].sort((a, b) => (b.last.tref ? 1 : 0) - (a.last.tref ? 1 : 0) || (b.upcoming ? 1 : 0) - (a.upcoming ? 1 : 0));
-    els.results.innerHTML = ranked.slice(0, 8).map(r => `<button type="button" class="race-option" role="option" data-id="${r.id}"><strong>${escapeHtml(r.name)}</strong><small>${raceMeta(r)}</small></button>`).join("")
-      + `<button type="button" class="race-option" role="option" data-id="custom"><strong>Ma course n'est pas dans la liste</strong><small>Tu saisis toi-même la distance et le D+</small></button>`;
+    const from = dayOffset(-15), to = dayOffset(61);
+    const ranked = words.length
+      ? ALL_RACES.filter(r => r.id !== "custom" && words.every(w => normalize(`${r.name} ${r.group ?? ""}`).includes(w)))
+        .sort((a, b) => (lastEdition(b).tref ? 1 : 0) - (lastEdition(a).tref ? 1 : 0) || (b.upcoming ? 1 : 0) - (a.upcoming ? 1 : 0)).slice(0, 12)
+      : ALL_RACES.filter(r => r.date && r.date >= from && r.date <= to)
+        .sort((a, b) => a.date.localeCompare(b.date) || a.name.localeCompare(b.name));
+    const shortDate = iso => new Date(`${iso}T12:00:00`).toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
+    const typed = escapeHtml(query.trim());
+    els.results.innerHTML = (words.length ? "" : `<span class="fine">Courses entre le ${shortDate(from)} et le ${shortDate(to)} ; tape un nom pour trouver les autres.</span>`)
+      + (words.length && !ranked.length
+        ? `<span class="fine">Aucune course trouvée pour « ${typed} ».</span><button type="button" class="race-option" role="option" data-id="custom"><strong>Saisir « ${typed} » moi-même</strong><small>Tu renseignes la distance et le D+ annoncés sur le site de la course</small></button>`
+        : "")
+      + ranked.map(r => `<button type="button" class="race-option" role="option" data-id="${r.id}"><strong>${escapeHtml(r.name)}</strong><small>${raceMeta(r)}</small></button>`).join("");
+  }
+
+  function chooseCustomRace() {
+    customName = typedQuery.trim();
+    loadRace("custom");
+    els.results.innerHTML = "";
+    els.nextDist.focus();
   }
 
   function loadRace(id) {
     selectedRaceId = raceById.has(id) ? id : "custom";
     const race = currentRace();
-    els.race.value = race.id === "custom" ? "Autre course" : race.name;
-    const next = race.next || { dist: race.last.dist, gain: race.last.gain };
-    els.lastDist.value = race.last.dist;
-    els.lastGain.value = race.last.gain;
+    els.race.value = race.id === "custom" ? customName || "Ta course" : race.name;
+    els.customOpen.hidden = race.id === "custom";
+    const next = nextCourse(race);
     els.nextDist.value = next.dist;
     els.nextGain.value = next.gain;
     els.knownTime.value = "";
     els.knownScore.value = "";
-    $("fs-history").hidden = Boolean(race.last.tref);
-    els.raceNote.textContent = race.id === "custom"
-      ? "Renseigne le parcours à l'étape 3, à partir du site de la course."
-      : race.note ?? `Parcours supposé identique à l'édition ${race.last.year}, modifie-le à l'étape 3 s'il change.`;
+    els.shareStatus.textContent = "";
+    els.shareYear.max = new Date().getFullYear();
+    els.shareYear.value = defaultEditionYear(race);
+    const isCustom = race.id === "custom";
+    els.courseFields.hidden = !isCustom;
+    els.courseLine.hidden = isCustom;
+    applyHistory(race);
     render();
+  }
+
+  function applyHistory(race) {
+    const last = lastEdition(race);
+    els.lastDist.value = last.dist;
+    els.lastGain.value = last.gain;
+    $("fs-history").hidden = Boolean(last.tref);
+    const sources = last.contributors > 1 ? `de ${last.contributors} résultats partagés` : "d'un résultat partagé";
+    els.raceNote.textContent = race.id === "custom"
+      ? "Renseigne la distance et le D+ annoncés sur le site de la course."
+      : last.shared
+        ? `Référence de l'édition ${last.year}, tirée ${sources}.${race.note ?? "Parcours supposé identique."}`
+        : race.note ?? `Parcours supposé identique à l'édition ${race.last.year}.`;
+  }
+
+  function defaultEditionYear(race) {
+    const year = Number((race.date ?? dayOffset(0)).slice(0, 4));
+    return race.upcoming === false ? year : year - 1;
   }
 
   function resultTref() {
@@ -702,7 +865,7 @@
       return fromResult.mid;
     }
     els.derived.textContent = "";
-    return race.last.tref ?? null;
+    return lastEdition(race).tref ?? null;
   }
 
   function setScore(value) {
@@ -718,9 +881,11 @@
     const score = setScore(els.score.value);
     const last = { dist: Number(els.lastDist.value), gain: Number(els.lastGain.value), tref: currentTref() };
     const next = { dist: Number(els.nextDist.value), gain: Number(els.nextGain.value) };
-    els.bibRace.textContent = race.id === "custom" ? "Ta course" : race.name;
+    els.bibRace.textContent = race.id === "custom" ? customName || "Ta course" : race.name;
     els.bibCourse.textContent = next.dist > 0 ? `${next.dist} km · ${next.gain} m D+ · ${kmEffort(next.dist, next.gain).toFixed(1)} km-effort` : "";
-    els.bibScore.textContent = `pour ${score} points minimum`;
+    els.bibScore.textContent = `pour ${score} points minimum, environ 9 fois sur 10`;
+    els.courseSummary.textContent = next.dist > 0 ? `Parcours : ${next.dist} km · +${next.gain} m D+` : "";
+    els.shareBox.hidden = !(shared.writable && race.id !== "custom" && resultTref());
 
     const hasHistory = last.tref > 0 && last.dist > 0 && last.gain >= 0;
     const valid = next.dist > 0 && next.gain >= 0;
@@ -746,7 +911,7 @@
     els.tPace.textContent = `soit ${formatPace(target, next.dist)} min/km de moyenne sur ${next.dist} km`;
     els.tReliability.textContent = f.noHistory ? "Faible" : f.same ? "Élevée" : "Moyenne";
     els.tMargin.textContent = `${Math.max(1, Math.round((likely - target) / 60))} min`;
-    els.tExplain.textContent = `Sans marge, le temps le plus probable pour ${score} est ${formatMinutes(likely)}.`;
+    els.tExplain.textContent = `Sans marge, le temps le plus probable pour ${score} est ${formatMinutes(likely)}, soit ${formatPace(likely, next.dist)} min/km : une chance sur deux d'avoir les points.`;
     els.method.textContent = f.noHistory
       ? "Sans historique : estimation à partir de la distance et du D+ seulement. Un résultat de l'an dernier la rendrait bien plus fiable."
       : f.same
@@ -762,7 +927,7 @@
       els.plan.innerHTML = points.map((p, i) => `<tr><td>${p.name.replace(/[<>&]/g, "")}</td><td>${p.km.toFixed(1)}</td><td>${formatMinutes(fractions[i] * finish)}</td><td>${clockAt(race.start, fractions[i] * finish)}</td></tr>`).join("");
     }
 
-    const steps = [450, 500, 550, 600, 650, 700, 750, 800];
+    const steps = [450, 500, 550, 600, 650, 700, 750, 800, 850, 900];
     if (!steps.includes(score)) steps.push(score);
     steps.sort((a, b) => a - b);
     els.ladder.innerHTML = steps.map(s => `<tr class="${s === score ? "is-target" : ""}"><td>${s}</td><td>${formatMinutes(maxTimeFor(f.strict, s))}</td><td>${formatPace(maxTimeFor(f.strict, s), next.dist)}/km</td></tr>`).join("");
@@ -1049,11 +1214,14 @@
   showView({ "#cote": "cote", "#profil": "profil", "#scorer": "profil" }[location.hash] ?? "chrono");
   renderCote();
 
-  els.race.addEventListener("focus", () => { els.race.select(); showResults(""); });
-  els.race.addEventListener("input", () => showResults(els.race.value));
+  els.courseEdit.addEventListener("click", () => { els.courseFields.hidden = false; els.courseLine.hidden = true; els.nextDist.focus(); });
+  els.race.addEventListener("focus", () => { els.race.select(); typedQuery = ""; showResults(""); });
+  els.race.addEventListener("input", () => { typedQuery = els.race.value; showResults(els.race.value); });
+  els.customOpen.addEventListener("click", chooseCustomRace);
   els.results.addEventListener("click", e => {
     const b = e.target.closest("button[data-id]");
     if (!b) return;
+    if (b.dataset.id === "custom") return chooseCustomRace();
     loadRace(b.dataset.id);
     els.results.innerHTML = "";
   });
@@ -1064,7 +1232,9 @@
   els.presets.addEventListener("click", e => { const b = e.target.closest("button"); if (b) { els.score.value = b.dataset.score; render(); } });
   for (const el of [els.lastDist, els.lastGain, els.nextDist, els.nextGain, els.knownTime, els.knownScore]) el.addEventListener("input", render);
   document.getElementById("form").addEventListener("submit", e => e.preventDefault());
+  els.shareBtn.addEventListener("click", shareResult);
 
   els.score.value = 600;
   loadRace("vv52");
+  connectShared().catch(() => {});
 </script>

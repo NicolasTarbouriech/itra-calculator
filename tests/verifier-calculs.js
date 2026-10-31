@@ -25,8 +25,9 @@ global.page = { els, pe, pf, sc, renderCote, renderProfil, loadRace };
 const { els, pe, pf, sc, renderCote, renderProfil, loadRace } = global.page;
 const text = html => html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ");
 
-assert.equal(els.tSafe.textContent, "5h18", "Veni Vici 52 km, 600 points : chrono à viser");
-assert.match(els.tPace.textContent, /6:08 min\/km/, "Veni Vici 52 km, 600 points : allure");
+assert.equal(els.tSafe.textContent, "5h12", "Veni Vici 52 km, 600 points : chrono à viser");
+assert.match(els.tPace.textContent, /6:00 min\/km/, "Veni Vici 52 km, 600 points : allure");
+assert.match(els.tExplain.textContent, /5h20, soit 6:09 min\/km/, "Veni Vici 52 km, 600 points : temps le plus probable et son allure");
 
 els.race.value = "custom";
 loadRace("custom");
