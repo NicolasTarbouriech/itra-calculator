@@ -43,6 +43,7 @@ renderCote();
 assert.equal(String(pe.now.textContent), "655", "cote générale publiée par ITRA le 30/10/2026");
 assert.equal(pe.min.textContent, "645", "score minimum pour faire monter la cote le 07/11/2026");
 assert.equal(String(pe.need.textContent), "722", "score à faire le 07/11/2026 pour passer à 700");
+assert.equal(text(pe.ways.innerHTML).trim(), "1 course 722 Chrono 2 courses 711 Chrono 3 courses 705 Chrono 4 courses 700 Chrono 5 courses ou plus 698 Chrono", "toutes les façons de passer à 700");
 
 renderProfil();
 assert.equal(pf.headline.textContent, "Plus fort dès que ça grimpe");

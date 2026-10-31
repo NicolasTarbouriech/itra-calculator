@@ -160,6 +160,8 @@
   .note b { color: var(--warn); }
 
   .ladder-box { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+  .ladder-box[hidden] { display: none; }
+  .ways-note { margin: 0; padding: 4px 14px 12px; }
   table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
   caption { text-align: left; font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); padding: 12px 14px 4px; }
   th, td { padding: 7px 14px; text-align: right; white-space: nowrap; font-size: 13.5px; }
@@ -444,6 +446,14 @@
             <button type="button" class="action" id="pi-goal-use" hidden>Calculer le chrono pour ce score</button>
           </div>
         </article>
+        <div class="ladder-box" id="pi-ways-box" hidden>
+          <table>
+            <caption id="pi-ways-caption">Toutes les façons d'y arriver</caption>
+            <thead><tr><th scope="col">Nouvelles courses</th><th scope="col">Score sur chacune</th><th scope="col"><span class="sr-only">Chrono</span></th></tr></thead>
+            <tbody id="pi-ways"></tbody>
+          </table>
+          <p class="fine ways-note">Même score sur chaque course, toutes courues dans les 12 mois.</p>
+        </div>
         <div class="ladder-box">
           <table>
             <caption>Ce qui compte dans ta cote</caption>
@@ -945,6 +955,7 @@
     results: $("results"), asOf: $("as-of"), simDate: $("sim-date"), goal: $("pi-goal"),
     asOfText: $("pi-asof"), now: $("pi-now"), scenario: $("pi-scenario"), min: $("pi-min"),
     goalText: $("pi-goal-text"), goalUse: $("pi-goal-use"), used: $("pi-used"), need: $("pi-need"), presets: $("pi-presets"),
+    waysBox: $("pi-ways-box"), waysCaption: $("pi-ways-caption"), ways: $("pi-ways"),
   };
 
   const parseDay = s => { const m = String(s).trim().match(/^(\d{4})-(\d{2})-(\d{2})$/) || String(s).trim().match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
@@ -974,9 +985,12 @@
     return { pi: Math.floor(best.raw), raw: best.raw, n: best.n, ranked: weighted };
   }
 
-  function minScore(results, race, predicate) {
-    for (let s = 1; s <= 1000; s++) if (predicate(performanceIndex([...results, { ...race, score: s }], race.date).pi)) return s;
-    return null;
+  function minScore(results, race, predicate, count = 1) {
+    const reaches = s => predicate(performanceIndex([...results, ...Array.from({ length: count }, () => ({ ...race, score: s }))], race.date).pi);
+    if (!reaches(1000)) return null;
+    let low = 1, high = 1000;
+    while (low < high) { const mid = (low + high) >> 1; if (reaches(mid)) high = mid; else low = mid + 1; }
+    return low;
   }
 
   function renderCote() {
@@ -1004,9 +1018,21 @@
       else if (goal <= base) { pe.need.textContent = "Atteint"; pe.goalText.textContent = `ta cote sera déjà de ${base} le ${dayLabel(raceDate)}`; }
       else if (need) { pe.need.textContent = need; pe.goalText.textContent = `au minimum, pour passer à ${goal} le ${dayLabel(raceDate)}`; pe.goalUse.dataset.score = need; }
       else { pe.need.textContent = "> 1000"; pe.goalText.textContent = `une seule course ne suffit pas pour atteindre ${goal}`; }
+      const ways = goal > base ? [1, 2, 3, 4, 5].map(count => [count, minScore(results, race, pi => pi >= goal, count)]) : [];
+      pe.waysBox.hidden = !ways.length;
+      pe.waysCaption.textContent = `Toutes les façons de passer à ${goal}`;
+      const groups = ways.reduce((list, [count, score]) => {
+        const last = list[list.length - 1];
+        if (last && last.score === score) last.to = count; else list.push({ from: count, to: count, score });
+        return list;
+      }, []);
+      const label = g => g.to === 5 && g.from < 5 || g.from === 5 ? `${g.from} course${g.from > 1 ? "s" : ""} ou plus`
+        : g.from === g.to ? `${g.from} course${g.from > 1 ? "s" : ""}` : `${g.from} à ${g.to} courses`;
+      pe.ways.innerHTML = groups.map(g => `<tr><td>${label(g)}</td><td><strong>${g.score ?? "> 1000"}</strong></td><td>${g.score ? `<button type="button" class="action" data-score="${g.score}">Chrono</button>` : ""}</td></tr>`).join("");
     } else {
       pe.need.textContent = "–"; pe.min.textContent = "–";
       pe.goalText.textContent = "choisis une date de course postérieure au jour du calcul"; pe.goalUse.hidden = true;
+      pe.waysBox.hidden = true;
     }
     for (const b of pe.presets.querySelectorAll("button")) b.setAttribute("aria-pressed", String(Number(b.dataset.goal) === Number(pe.goal.value)));
   }
@@ -1181,6 +1207,7 @@
   for (const el of [pe.results, pe.asOf, pe.simDate, pe.goal]) el.addEventListener("input", renderCote);
   pe.goalUse.addEventListener("click", () => { els.score.value = pe.goalUse.dataset.score; showView("chrono"); render(); });
   pe.presets.addEventListener("click", e => { const b = e.target.closest("button"); if (b) { pe.goal.value = b.dataset.goal; renderCote(); } });
+  pe.ways.addEventListener("click", e => { const b = e.target.closest("button[data-score]"); if (b) { els.score.value = b.dataset.score; showView("chrono"); render(); } });
   for (const b of document.querySelectorAll(".tabs button")) b.addEventListener("click", () => showView(b.dataset.view));
   pf.edit.addEventListener("click", () => { showView("cote"); pe.results.focus(); });
   sc.extra.addEventListener("input", renderProfil);
