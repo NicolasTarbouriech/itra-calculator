@@ -118,7 +118,12 @@
     #view-chrono .fs-history { order: 2; }
     #view-chrono .fs-goal { order: 3; }
     #view-chrono .bib-wrap { order: 4; }
+    #view-cote .layout > form { display: contents; }
+    #view-cote .fs-pi-goal { order: 1; }
+    #view-cote .bib-wrap { order: 2; }
+    #view-cote .fs-pi-results { order: 3; }
   }
+  .big-num { font-size: 26px; font-weight: 700; padding: 6px 12px; }
   .bib {
     position: relative; background: var(--bib-bg); color: var(--bib-fg); border-radius: 6px;
     border: 1px solid var(--bib-line); padding: 26px 24px 20px; display: grid; gap: 14px;
@@ -381,8 +386,28 @@
   <div class="view" id="view-cote" role="tabpanel" aria-labelledby="tab-cote" hidden>
     <div class="layout">
       <form class="panel" id="cote-form" autocomplete="off">
-        <fieldset>
-          <legend><span class="step">1</span> Tes résultats</legend>
+        <fieldset class="fs-pi-goal">
+          <legend><span class="step">1</span> Objectif</legend>
+          <div class="group">
+            <div class="row">
+              <label for="pi-goal">Cote visée
+                <input id="pi-goal" class="num big-num" type="number" min="100" max="1000" step="1" inputmode="numeric">
+              </label>
+              <label for="sim-date">Date de ta prochaine course
+                <input id="sim-date" class="num" type="date">
+              </label>
+            </div>
+            <div class="presets" id="pi-presets" role="group" aria-label="Cotes courantes">
+              <button type="button" data-goal="600">600</button>
+              <button type="button" data-goal="650">650</button>
+              <button type="button" data-goal="700">700</button>
+              <button type="button" data-goal="750">750</button>
+              <button type="button" data-goal="800">800</button>
+            </div>
+          </div>
+        </fieldset>
+        <fieldset class="fs-pi-results">
+          <legend><span class="step">2</span> Tes résultats</legend>
           <div class="group">
             <label for="results">Un résultat par ligne : date ; score ; nom ; km ; D+ <span class="hint">AAAA-MM-JJ, abandons exclus ; km et D+ servent au profil coureur</span>
               <textarea id="results" rows="12"></textarea>
@@ -391,19 +416,6 @@
             <label for="as-of">Cote calculée au
               <input id="as-of" class="num" type="date">
             </label>
-          </div>
-        </fieldset>
-        <fieldset>
-          <legend><span class="step">2</span> Prochaine course</legend>
-          <div class="group">
-            <div class="row">
-              <label for="sim-date">Date
-                <input id="sim-date" class="num" type="date">
-              </label>
-              <label for="pi-goal">Cote visée
-                <input id="pi-goal" class="num" type="number" min="100" max="1000" step="1" inputmode="numeric">
-              </label>
-            </div>
           </div>
         </fieldset>
       </form>
@@ -419,15 +431,16 @@
             <div class="balise" aria-hidden="true"><span></span><span></span></div>
           </div>
           <div class="bib-target">
-            <span class="k">Aujourd'hui</span>
-            <span class="bib-time" id="pi-now">–</span>
-            <span class="bib-score" id="pi-scenario"></span>
+            <span class="k">Score de course à faire</span>
+            <span class="bib-time" id="pi-need">–</span>
+            <span class="bib-score" id="pi-goal-text"></span>
           </div>
           <div class="bib-alts">
+            <div><span class="k">Cote aujourd'hui</span><span class="v" id="pi-now">–</span></div>
             <div><span class="k">Score mini pour monter</span><span class="v" id="pi-min">–</span></div>
           </div>
           <div class="bib-foot">
-            <span id="pi-goal-text"></span>
+            <span id="pi-scenario"></span>
             <button type="button" class="action" id="pi-goal-use" hidden>Calculer le chrono pour ce score</button>
           </div>
         </article>
@@ -436,13 +449,6 @@
             <caption>Ce qui compte dans ta cote</caption>
             <thead><tr><th scope="col">Course</th><th scope="col">Score</th><th scope="col">Poids</th><th scope="col">Pondéré</th></tr></thead>
             <tbody id="pi-used"></tbody>
-          </table>
-        </div>
-        <div class="ladder-box">
-          <table>
-            <caption>Baisses à venir sans nouvelle course</caption>
-            <thead><tr><th scope="col">Date</th><th scope="col">Pourquoi</th><th scope="col">Cote</th></tr></thead>
-            <tbody id="pi-drops"></tbody>
           </table>
         </div>
       </div>
@@ -938,7 +944,7 @@
   const pe = {
     results: $("results"), asOf: $("as-of"), simDate: $("sim-date"), goal: $("pi-goal"),
     asOfText: $("pi-asof"), now: $("pi-now"), scenario: $("pi-scenario"), min: $("pi-min"),
-    goalText: $("pi-goal-text"), goalUse: $("pi-goal-use"), used: $("pi-used"), drops: $("pi-drops"),
+    goalText: $("pi-goal-text"), goalUse: $("pi-goal-use"), used: $("pi-used"), need: $("pi-need"), presets: $("pi-presets"),
   };
 
   const parseDay = s => { const m = String(s).trim().match(/^(\d{4})-(\d{2})-(\d{2})$/) || String(s).trim().match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
@@ -980,7 +986,7 @@
     const now = performanceIndex(results, asOf);
     pe.asOfText.textContent = `au ${dayLabel(asOf)}`;
     pe.now.textContent = now.pi || "–";
-    pe.scenario.textContent = now.n ? `calculée sur ${now.n === 1 ? "ta meilleure course" : `tes ${now.n} meilleures courses`}` : "aucun résultat dans les 36 derniers mois";
+    pe.scenario.textContent = now.n ? `Cote du jour calculée sur ${now.n === 1 ? "ta meilleure course" : `tes ${now.n} meilleures courses`}.` : "Aucun résultat dans les 36 derniers mois.";
     const counted = new Set(now.ranked.slice(0, now.n));
     pe.used.innerHTML = now.ranked.map(r => `<tr class="${r.w === 0 ? "dropped" : ""}"><td class="${counted.has(r) ? "used" : "unused"}">${r.name.replace(/[<>&]/g, "")}<br><span class="fine">${dayLabel(r.date)}</span></td><td>${r.score}</td><td>${r.w.toFixed(3)}</td><td class="${counted.has(r) ? "used" : "unused"}">${r.ws.toFixed(1)}${counted.has(r) ? " ✓" : ""}</td></tr>`).join("")
       || `<tr><td colspan="4">Ajoute au moins un résultat.</td></tr>`;
@@ -992,31 +998,17 @@
       const up = minScore(results, race, pi => pi > base);
       pe.min.textContent = up ? String(up) : "> 1000";
       const goal = Number(pe.goal.value);
-      if (goal > 0) {
-        const need = goal <= base ? 0 : minScore(results, race, pi => pi >= goal);
-        if (goal <= base) { pe.goalText.textContent = `Ta cote sera déjà de ${base} le ${dayLabel(raceDate)} : l'objectif de ${goal} est atteint.`; pe.goalUse.hidden = true; }
-        else if (need) { pe.goalText.innerHTML = `Pour passer à <strong>${goal}</strong>, il te faut un score de course d'au moins <strong>${need}</strong> le ${dayLabel(raceDate)}.`; pe.goalUse.hidden = false; pe.goalUse.dataset.score = need; }
-        else { pe.goalText.textContent = `Une seule course ne suffit pas pour atteindre ${goal} : il faudrait un score supérieur à 1000.`; pe.goalUse.hidden = true; }
-      }
+      const need = goal > base ? minScore(results, race, pi => pi >= goal) : null;
+      pe.goalUse.hidden = !need;
+      if (!(goal > 0)) { pe.need.textContent = "–"; pe.goalText.textContent = "indique la cote que tu vises"; }
+      else if (goal <= base) { pe.need.textContent = "Atteint"; pe.goalText.textContent = `ta cote sera déjà de ${base} le ${dayLabel(raceDate)}`; }
+      else if (need) { pe.need.textContent = need; pe.goalText.textContent = `au minimum, pour passer à ${goal} le ${dayLabel(raceDate)}`; pe.goalUse.dataset.score = need; }
+      else { pe.need.textContent = "> 1000"; pe.goalText.textContent = `une seule course ne suffit pas pour atteindre ${goal}`; }
     } else {
-      pe.min.textContent = "–";
-      pe.goalText.textContent = "Choisis une date de course postérieure au jour du calcul."; pe.goalUse.hidden = true;
+      pe.need.textContent = "–"; pe.min.textContent = "–";
+      pe.goalText.textContent = "choisis une date de course postérieure au jour du calcul"; pe.goalUse.hidden = true;
     }
-
-    const horizon = addMonths(asOf, 18);
-    const dates = new Map();
-    for (const r of results) for (const k of [12, 18, 24, 30, 36]) { const d = addMonths(r.date, k); if (before(asOf, d) && !before(horizon, d)) dates.set(dayKey(d), d); }
-    let previous = now.pi; const rows = [];
-    for (const d of [...dates.values()].sort((a, b) => (dayKey(a) < dayKey(b) ? -1 : 1))) {
-      const at = performanceIndex(results, d);
-      if (at.pi !== previous) {
-        const crossing = results.filter(r => [12, 18, 24, 30, 36].some(k => dayKey(addMonths(r.date, k)) === dayKey(d)));
-        const why = crossing.map(r => { const w = ageWeight(r.date, d); return `${r.name} ${w ? `passe à ${w.toFixed(3)}` : "sort du calcul"}`; }).join(", ");
-        rows.push(`<tr><td>${dayLabel(d)}</td><td style="white-space:normal;text-align:left">${why.replace(/[<>&]/g, "")}</td><td>${at.pi} <span class="delta-down">(${at.pi - previous})</span></td></tr>`);
-        previous = at.pi;
-      }
-    }
-    pe.drops.innerHTML = rows.join("") || `<tr><td colspan="3">Pas de baisse dans les 18 prochains mois.</td></tr>`;
+    for (const b of pe.presets.querySelectorAll("button")) b.setAttribute("aria-pressed", String(Number(b.dataset.goal) === Number(pe.goal.value)));
   }
 
   const TERRAINS = [
@@ -1188,6 +1180,7 @@
   pe.goal.value = 670;
   for (const el of [pe.results, pe.asOf, pe.simDate, pe.goal]) el.addEventListener("input", renderCote);
   pe.goalUse.addEventListener("click", () => { els.score.value = pe.goalUse.dataset.score; showView("chrono"); render(); });
+  pe.presets.addEventListener("click", e => { const b = e.target.closest("button"); if (b) { pe.goal.value = b.dataset.goal; renderCote(); } });
   for (const b of document.querySelectorAll(".tabs button")) b.addEventListener("click", () => showView(b.dataset.view));
   pf.edit.addEventListener("click", () => { showView("cote"); pe.results.focus(); });
   sc.extra.addEventListener("input", renderProfil);
