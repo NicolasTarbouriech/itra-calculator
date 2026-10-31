@@ -255,6 +255,8 @@ Test sur les éditions consécutives connues :
 
 Seule une erreur dans le sens « ITRA plus sévère » compte pour un chrono à viser : la marge de sécurité est donc unilatérale. Les plus grosses erreurs viennent des recalculs forts (OCC 2023 : −10,4 %, MCC 2023 : −8,8 %). Test sur la Boffi Fifty 2026 : prévu 3:30:09, réel 3:27:51.
 
+**Sans historique** (nouvelle course ou course jamais saisie), on estime à partir du seul parcours, ajusté sur les 21 courses connues : **T_ref ≈ 68,05 s × km-effort^1,235**. Chaque événement a été testé sans avoir servi au calage. L'erreur médiane est de 4,4 % ; 80 % des cas sont sous 7,5 % et le pire atteint 9,5 %. Ajouter la pente ou séparer km et D+ n'améliore rien. Les plus gros écarts viennent de la technicité, que le parcours ne capture pas : la référence de la CCC est 7 % plus rapide que prévu, celles de l'Hérault Trail et de Majorque 6 à 7 % plus lentes. Pour Els Tres Mils (Majorque, 56 km), l'estimation sans historique donne 6h36 pour 600 points, contre 7h33 avec l'édition 2025 : 14 % d'écart. La marge de sécurité passe à 7 % (dépassée dans 3 cas sur 21). Le D− n'est pas modélisé : presque toutes les courses connues ont un D+ proche du D−, ce qui empêche de mesurer l'effet d'un parcours descendant.
+
 ### 3.8 L'allure par point de passage
 
 Ajusté sur les temps de passage LiveTrail de la Veni Vici 2025 (82, 48, 27 et 16 km ; 7 456 finishers), pour les coureurs de niveau 550 à 650 :

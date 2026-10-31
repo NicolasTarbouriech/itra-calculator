@@ -19,14 +19,21 @@ global.document = {
 global.location = { hash: "" };
 
 vm.runInThisContext(`${script}
-global.page = { els, pe, pf, sc, renderCote, renderProfil };
+global.page = { els, pe, pf, sc, renderCote, renderProfil, loadRace };
 `);
 
-const { els, pe, pf, sc, renderCote, renderProfil } = global.page;
+const { els, pe, pf, sc, renderCote, renderProfil, loadRace } = global.page;
 const text = html => html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ");
 
 assert.equal(els.tSafe.textContent, "5h18", "Veni Vici 52 km, 600 points : chrono à viser");
 assert.match(els.tPace.textContent, /6:08 min\/km/, "Veni Vici 52 km, 600 points : allure");
+
+els.race.value = "custom";
+loadRace("custom");
+assert.equal(els.tReliability.textContent, "Faible", "sans résultat de l'an dernier : mode sans historique");
+assert.equal(els.tSafe.textContent, "4h19", "42 km +1500, 600 points, estimé à partir du parcours");
+els.race.value = "vv52";
+loadRace("vv52");
 
 pe.asOf.value = "2026-10-30";
 renderCote();

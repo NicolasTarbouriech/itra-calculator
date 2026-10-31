@@ -226,7 +226,7 @@
       </fieldset>
 
       <fieldset>
-        <legend><span class="step">2</span> L'an dernier</legend>
+        <legend><span class="step">2</span> L'an dernier <span class="hint" style="text-transform:none;letter-spacing:0;font-weight:400">facultatif, mais 15 fois plus précis</span></legend>
         <div class="group">
           <div class="row">
             <label for="known-time">Ton temps <span class="hint">ou celui d'un finisher, h:mm:ss</span>
@@ -260,14 +260,6 @@
             </label>
           </div>
           <span class="chip same" id="course-chip">Parcours identique</span>
-          <div class="row">
-            <label for="start">Heure de départ <span class="hint">facultatif, hh:mm</span>
-              <input id="start" class="num" type="text" placeholder="08:00" inputmode="numeric">
-            </label>
-          </div>
-          <label for="checkpoints">Points de passage <span class="hint">un par ligne : nom ; km ; D+ cumulé (le D+ est facultatif)</span>
-            <textarea id="checkpoints" rows="5" placeholder="Ravito 1 ; 14.7 ; 325"></textarea>
-          </label>
         </div>
       </fieldset>
 
@@ -289,15 +281,6 @@
             <button type="button" data-score="700">700</button>
             <button type="button" data-score="750">750</button>
           </div>
-        </div>
-      </fieldset>
-
-      <fieldset>
-        <legend><span class="step">5</span> Météo <span class="hint" style="text-transform:none;letter-spacing:0;font-weight:400">facultatif</span></legend>
-        <div class="group">
-          <label for="heat">Température max prévue, par rapport à la dernière édition <span class="hint">°C (+3 = plus chaud)</span>
-            <input id="heat" class="num" type="number" step="0.5" min="-20" max="20" inputmode="decimal">
-          </label>
         </div>
       </fieldset>
     </form>
@@ -327,7 +310,6 @@
           <span id="method"></span>
         </div>
       </article>
-      <p class="note" id="heat-note" hidden></p>
       <div class="ladder-box" id="plan-box" hidden>
         <table>
           <caption id="plan-caption">Plan de passage</caption>
@@ -345,20 +327,7 @@
     </div>
   </div>
 
-  <section class="method">
-    <h2>Comment c'est calculé</h2>
-    <p>ITRA donne à chaque finisher le même calcul : le score est 1000 fois le temps de référence de l'édition divisé par ton temps, arrondi à l'entier inférieur. Le temps de référence (T_ref), c'est le chrono qui vaudrait 1000 points ce jour-là. Pour un score visé S, il faut donc courir en moins de 1000 × T_ref / S.</p>
-    <div class="formula">score = ⌊ 1000 × T_ref / temps ⌋ &nbsp;⇒&nbsp; temps max = 1000 × T_ref / S</div>
-    <p>Tout l'enjeu est de prévoir T_ref avant la course. Sur 72 paires d'éditions analysées (UTMB, CCC, OCC, TDS, MCC 2021-2026, courses locales 2024-2026, environ 50 000 résultats), deux cas se dégagent :</p>
-    <div class="accuracy">
-      <div><span class="k">Parcours déclaré identique : T_ref reporté (−0,3 %)</span><span class="v">±0,23 %</span><span class="fine">erreur médiane ; 7 éditions sur 8 dans ±1,2 %</span></div>
-      <div><span class="k">Parcours modifié : T_ref × (km-effort nouveau / ancien)^1,27</span><span class="v">±1,5 %</span><span class="fine">erreur médiane ; 21 éditions sur 26 dans ±3,5 %</span></div>
-    </div>
-    <p>Le chrono à viser inclut une marge de sécurité, au cas où ITRA serait plus sévère que prévu : 1 % si le parcours n'a pas changé, 3,3 % s'il a changé. Sur les éditions testées, ITRA n'a été plus sévère que cette marge qu'une fois sur 8 avec un parcours inchangé, et 3 fois sur 29 avec un parcours modifié. Le km-effort vaut distance + D+/100.</p>
-    <p>La météo n'entre pas dans le calcul d'ITRA. Quand le parcours déclaré ne change pas, ITRA ne baisse pas la barre même si tout le peloton ralentit : par forte chaleur, il faut le même chrono que par temps frais, alors qu'on perd environ 0,5 % de temps par degré. Quand le parcours change, ITRA baisse la barre d'environ la moitié du ralentissement.</p>
-    <p>Le plan de passage répartit le temps visé selon la part du parcours accomplie, en comptant 55 m de D+ comme 1 km et en tenant compte de la fatigue : part du temps = (part de « km + D+/55 »)^1,134. Ce modèle a été ajusté sur les passages LiveTrail de 7 456 finishers de la Veni Vici 2025 ; il se trompe en moyenne de 1,3 point de pourcentage, soit environ 4 minutes sur 5 heures.</p>
-    <p class="fine">Les temps de référence intégrés ont été reconstitués à partir des résultats publiés ; le D+ 2026 de la Veni Vici vient de l'organisateur et peut différer de celui qu'ITRA retiendra. Un recalcul fort d'ITRA reste possible (OCC 2023 : −10 %). Outil indépendant, sans lien avec ITRA.</p>
-  </section>
+    <p class="fine method-note">Le score ITRA vaut 1000 × temps de référence ÷ ton temps. Le temps de référence est repris de l'an dernier quand on le connaît, sinon estimé à partir du parcours, marge de sécurité incluse. Outil indépendant, sans lien avec ITRA.</p>
   </div>
 
   <div class="view" id="view-cote" role="tabpanel" aria-labelledby="tab-cote" hidden>
@@ -437,13 +406,7 @@
       </div>
     </div>
 
-    <section class="method">
-      <h2>Comment ta cote est calculée</h2>
-      <p>ITRA garde tes scores des 36 derniers mois, sans les abandons. Chaque score perd un peu de poids avec l'âge : plein poids jusqu'à 11 mois, puis 0,995 de 12 à 17 mois, 0,990 de 18 à 23, 0,985 de 24 à 29 et 0,980 de 30 à 35. Au-delà, il ne compte plus.</p>
-      <p>Avec les 5 meilleurs scores pondérés, ITRA calcule cinq scénarios et garde le plus favorable : ta meilleure course seule à 0,97, tes deux meilleures (0,99 et 0,98), tes trois (1,00 ; 0,99 ; 0,99), tes quatre (1,01 ; 1,00 ; 1,00 ; 0,99), tes cinq (1,02 ; 1,01 ; 1,00 ; 1,00 ; 0,99). Chaque scénario est une moyenne : la somme des scores pondérés divisée par le nombre de courses. La cote est arrondie à l'entier inférieur.</p>
-      <div class="formula">cote = ⌊ max sur n de ( Σ poids_expérience × poids_âge × score ) / n ⌋</div>
-      <p>Ce calcul redonne au point près les quatre cotes publiées sur ta fiche le 30 octobre 2026 : générale 655, semi-marathon 655, marathon 501 et 50K 616. Les cotes par catégorie suivent la même formule avec les seules courses de la catégorie ; seule la cote générale est simulée ici.</p>
-    </section>
+    <p class="fine method-note">Formule officielle d'ITRA : tes 5 meilleurs scores des 36 derniers mois, pondérés selon leur âge et leur nombre. Elle redonne au point près les cotes publiées. Outil indépendant, sans lien avec ITRA.</p>
   </div>
 
   <div class="view" id="view-profil" role="tabpanel" aria-labelledby="tab-profil" hidden>
@@ -504,20 +467,13 @@
         </table>
       </div>
       <div class="group">
-        <label for="sc-extra">Ajouter des courses à comparer <span class="hint">une par ligne : nom ; km ; D+ ; un temps de l'an dernier ; son score</span>
+        <label for="sc-extra">Ajouter des courses à comparer <span class="hint">une par ligne : nom ; km ; D+, puis si tu les as un temps de l'an dernier ; son score</span>
           <textarea id="sc-extra" rows="3" placeholder="Trail des Glazicks ; 42 ; 1300 ; 4:31:00 ; 612"></textarea>
         </label>
       </div>
     </section>
 
-    <section class="method">
-      <h2>Comment ton profil est calculé</h2>
-      <p>Les mêmes seuils s'appliquent à tous les coureurs. Le terrain se mesure en mètres de D+ par kilomètre. Montagne à partir de 50 m/km, soit une pente moyenne de 5 % : c'est le seuil de la course en montagne dans les règles de l'IAAF. Roulant sous 30 m/km, une convention puisqu'aucune règle officielle ne le définit ; vallonné entre les deux. Le format suit les catégories de distance d'ITRA, en kilomètres : court jusqu'au semi (moins de 35 km), moyen pour le marathon et le 50K (35 à 65 km), long au-delà. La distance et la pente restent ainsi deux critères séparés.</p>
-      <p>Pour chaque catégorie, on compare ton score moyen à ton score moyen toutes courses confondues sur la même période. Un écart de +20 veut dire que tu y scores 20 points de mieux que d'habitude. Avec une ou deux courses dans une catégorie, l'écart reste indicatif : une mauvaise journée pèse lourd.</p>
-      <p>La progression compare ta moyenne de la période à celle de la période précédente de même durée. La régularité est l'écart type de tes scores sur la période.</p>
-      <p>Le score probable d'une course se calcule en trois morceaux, affichés sous chaque score : ton niveau (ta moyenne des 12 derniers mois), plus ton écart sur ce terrain, plus ton écart sur ce format. Exemple pour Brocéliande : 647 − 7 (roulant) + 3 (court) = 643.</p>
-      <p>Un écart mesuré sur une seule course ne compte qu'au tiers, sur deux courses à moitié, puis de plus en plus : une seule mauvaise journée ne doit pas classer un terrain comme ton point faible. C'est pourquoi l'estimation de Brocéliande (643) dépasse ton vrai score de 625 : ton −22 au roulant ne repose que sur cette course. Pour un terrain ou un format que tu n'as jamais couru, on reprend l'écart de la catégorie voisine, et c'est marqué « estimé ». La clémence propre à chaque course n'est mesurée que pour Brocéliande, où les coureurs de tête ont scoré 10 à 40 points au-dessus de leurs autres courses.</p>
-    </section>
+    <p class="fine method-note">Ton niveau est ta moyenne des 12 derniers mois. Les écarts comparent tes scores par terrain (D+ par km : roulant sous 30 m, montagne dès 50 m) et par format (catégories de distance ITRA) ; un écart mesuré sur peu de courses compte moins. Outil indépendant, sans lien avec ITRA.</p>
   </div>
 
 </div>
@@ -527,7 +483,9 @@
   const DRIFT_SAME = -0.003;
   const BAND_SAME = 0.010;
   const BAND_CHANGED = 0.033;
-  const HEAT_PER_DEGREE = 0.0054;
+  const BAND_NO_HISTORY = 0.07;
+  const GENERIC_SCALE_S = 68.05;
+  const GENERIC_EXPONENT = 1.235;
   const PACE_DPLUS_PER_KM = 55;
   const PACE_EXPONENT = 1.134;
 
@@ -565,10 +523,10 @@
     race: $("race"), raceNote: $("race-note"), lastDist: $("last-dist"), lastGain: $("last-gain"),
     knownTime: $("known-time"), knownScore: $("known-score"), derived: $("derived"),
     nextDist: $("next-dist"), nextGain: $("next-gain"), chip: $("course-chip"),
-    scoreRange: $("score-range"), score: $("score"), presets: $("presets"), heat: $("heat"),
+    scoreRange: $("score-range"), score: $("score"), presets: $("presets"),
     bibRace: $("bib-race"), bibCourse: $("bib-course"), tSafe: $("t-safe"), tReliability: $("t-reliability"), tMargin: $("t-margin"), tExplain: $("t-explain"),
-    bibScore: $("bib-score"), tPace: $("t-pace"), method: $("method"), heatNote: $("heat-note"), ladder: $("ladder"),
-    start: $("start"), checkpoints: $("checkpoints"), planBox: $("plan-box"), plan: $("plan"), planCaption: $("plan-caption"),
+    bibScore: $("bib-score"), tPace: $("t-pace"), method: $("method"), ladder: $("ladder"),
+    planBox: $("plan-box"), plan: $("plan"), planCaption: $("plan-caption"),
   };
 
   function parseCheckpoints(text, finishKm, finishGain) {
@@ -634,6 +592,11 @@
     return { same, ratio, mid, strict: mid * (1 - band), lenient: mid * (1 + band), band };
   }
 
+  function genericForecast(next) {
+    const mid = GENERIC_SCALE_S * Math.pow(kmEffort(next.dist, next.gain), GENERIC_EXPONENT);
+    return { same: false, noHistory: true, ratio: 1, mid, strict: mid * (1 - BAND_NO_HISTORY), lenient: mid * (1 + BAND_NO_HISTORY), band: BAND_NO_HISTORY };
+  }
+
   function fillRaces() {
     const groups = new Map();
     for (const race of RACES) {
@@ -653,8 +616,6 @@
     els.nextGain.value = next.gain;
     els.knownTime.value = "";
     els.knownScore.value = "";
-    els.start.value = race.start ?? "";
-    els.checkpoints.value = (race.checkpoints ?? []).map(([name, km, dplus]) => `${name} ; ${km} ; ${dplus}`).join("\n");
     els.raceNote.textContent = race.id === "custom"
       ? "Le parcours se trouve sur le site de la course ; le temps et le score, sur ta fiche ITRA."
       : race.note ?? `Parcours supposé identique à l'édition ${race.last.year}, modifie-le à l'étape 3 s'il change.`;
@@ -680,7 +641,7 @@
       els.derived.textContent = `Pas besoin de résultat ici : le temps qui valait 1000 points en ${race.last.year} est connu (${formatTime(Math.round(race.last.tref))}). Un résultat saisi le remplace.`;
       return race.last.tref;
     }
-    els.derived.textContent = "Saisis ton temps et ton score de l'an dernier pour lancer le calcul.";
+    els.derived.textContent = "Sans résultat de l'an dernier, le chrono est estimé à partir du seul parcours (environ ±4 %). Ajoute un temps et un score pour une prévision fiable.";
     return null;
   }
 
@@ -701,54 +662,44 @@
     els.bibCourse.textContent = next.dist > 0 ? `${next.dist} km · ${next.gain} m D+ · ${kmEffort(next.dist, next.gain).toFixed(1)} km-effort` : "";
     els.bibScore.textContent = `pour ${score} points minimum`;
 
-    const valid = last.dist > 0 && last.gain >= 0 && last.tref > 0 && next.dist > 0 && next.gain >= 0;
+    const hasHistory = last.tref > 0 && last.dist > 0 && last.gain >= 0;
+    const valid = next.dist > 0 && next.gain >= 0;
     if (!valid) {
       for (const el of [els.tSafe, els.tReliability, els.tMargin]) el.textContent = "–";
       els.tPace.textContent = "";
       els.tExplain.textContent = "";
       els.method.textContent = "Il manque un résultat de l'an dernier (temps et score) ou le parcours.";
       els.ladder.innerHTML = "";
-      els.heatNote.hidden = true;
       els.planBox.hidden = true;
       return;
     }
 
-    const f = forecast(last, next);
+    const f = hasHistory ? forecast(last, next) : genericForecast(next);
     const delta = (f.ratio - 1) * 100;
     els.chip.className = `chip ${f.same ? "same" : "changed"}`;
-    els.chip.textContent = f.same ? "Parcours identique : T_ref reporté" : `Parcours modifié : ${delta >= 0 ? "+" : "−"}${Math.abs(delta).toFixed(1)} % de km-effort, T_ref recalculé`;
+    els.chip.textContent = f.noHistory ? "Sans historique : estimation à partir du parcours"
+      : f.same ? "Parcours identique : T_ref reporté" : `Parcours modifié : ${delta >= 0 ? "+" : "−"}${Math.abs(delta).toFixed(1)} % de km-effort, T_ref recalculé`;
 
     const target = maxTimeFor(f.strict, score);
     const likely = maxTimeFor(f.mid, score);
     els.tSafe.textContent = formatMinutes(target);
     els.tPace.textContent = `soit ${formatPace(target, next.dist)} min/km de moyenne sur ${next.dist} km`;
-    els.tReliability.textContent = f.same ? "Élevée" : "Moyenne";
+    els.tReliability.textContent = f.noHistory ? "Faible" : f.same ? "Élevée" : "Moyenne";
     els.tMargin.textContent = `${Math.max(1, Math.round((likely - target) / 60))} min`;
     els.tExplain.textContent = `Sans marge, le temps le plus probable pour ${score} est ${formatMinutes(likely)}.`;
-    els.method.textContent = f.same
-      ? "Parcours inchangé : ITRA reprend en général la référence de l'an dernier, la prévision est très fiable."
-      : "Parcours modifié : ITRA recalcule sa référence, d'où une marge plus large.";
+    els.method.textContent = f.noHistory
+      ? "Sans historique : estimation à partir de la distance et du D+ seulement. Un résultat de l'an dernier la rendrait bien plus fiable."
+      : f.same
+        ? "Parcours inchangé : ITRA reprend en général la référence de l'an dernier, la prévision est très fiable."
+        : "Parcours modifié : ITRA recalcule sa référence, d'où une marge plus large.";
 
-    const heat = Number(els.heat.value);
-    if (els.heat.value !== "" && Number.isFinite(heat) && heat !== 0) {
-      const slow = HEAT_PER_DEGREE * heat * (f.same ? 1 : 0.5);
-      const safe = maxTimeFor(f.strict, score);
-      const minutes = Math.abs(safe * slow / 60);
-      els.heatNote.hidden = false;
-      els.heatNote.innerHTML = heat > 0
-        ? `<b>Plus chaud de ${heat} °C.</b> À effort égal, compte environ ${minutes.toFixed(0)} min de plus que l'an dernier${f.same ? ", qu'ITRA ne compensera pas" : ", dont ITRA ne compensera qu'environ la moitié"}. Le chrono à battre reste ${formatMinutes(safe)} : vise une forme un peu meilleure.`
-        : `<b>Plus frais de ${Math.abs(heat)} °C.</b> À effort égal, tu devrais gagner environ ${minutes.toFixed(0)} min${f.same ? ", qu'ITRA ne retirera pas de ton score" : ", dont ITRA en reprendra environ la moitié"}. Le chrono à battre reste ${formatMinutes(safe)}.`;
-    } else {
-      els.heatNote.hidden = true;
-    }
-
-    const points = parseCheckpoints(els.checkpoints.value, next.dist, next.gain);
+    const points = parseCheckpoints((race.checkpoints ?? []).map(([name, km, dplus]) => `${name} ; ${km} ; ${dplus}`).join("\n"), next.dist, next.gain);
     els.planBox.hidden = points.length < 2;
     if (points.length >= 2) {
       const finish = maxTimeFor(f.strict, score);
       const fractions = splitFractions(points);
       els.planCaption.textContent = `Plan de passage pour ${formatMinutes(finish)}`;
-      els.plan.innerHTML = points.map((p, i) => `<tr><td>${p.name.replace(/[<>&]/g, "")}</td><td>${p.km.toFixed(1)}</td><td>${formatMinutes(fractions[i] * finish)}</td><td>${clockAt(els.start.value, fractions[i] * finish)}</td></tr>`).join("");
+      els.plan.innerHTML = points.map((p, i) => `<tr><td>${p.name.replace(/[<>&]/g, "")}</td><td>${p.km.toFixed(1)}</td><td>${formatMinutes(fractions[i] * finish)}</td><td>${clockAt(race.start, fractions[i] * finish)}</td></tr>`).join("");
     }
 
     const steps = [450, 500, 550, 600, 650, 700, 750, 800];
@@ -974,12 +925,13 @@
       const next = r.next || { dist: r.last.dist, gain: r.last.gain };
       return { id: r.id, name: r.name, km: next.dist, dplus: next.gain, forecast: forecast(r.last, next) };
     });
-    const extra = String(sc.extra.value || "").split("\n").map(l => l.split(/[;\t]/).map(s => s.trim())).filter(p => p.length >= 5)
+    const extra = String(sc.extra.value || "").split("\n").map(l => l.split(/[;\t]/).map(s => s.trim())).filter(p => p.length >= 3)
       .map(([name, km, dplus, time, score]) => {
         const t = parseTime(time), s = Number(score), dist = Number(String(km).replace(",", ".")), gain = Number(String(dplus).replace(",", "."));
-        if (!(t && s > 0 && dist > 0 && gain >= 0)) return null;
-        const tref = (s + 0.5) * t / 1000;
-        return { id: `extra-${name}`, name, km: dist, dplus: gain, forecast: forecast({ dist, gain, tref }, { dist, gain }), extra: true };
+        if (!(dist > 0 && gain >= 0)) return null;
+        const next = { dist, gain };
+        const f = t && s > 0 ? forecast({ dist, gain, tref: (s + 0.5) * t / 1000 }, next) : genericForecast(next);
+        return { id: `extra-${name}`, name, km: dist, dplus: gain, forecast: f, extra: true };
       }).filter(Boolean);
     return [...known, ...extra];
   }
@@ -1006,7 +958,7 @@
     sc.caption.textContent = `Les ${rows.length} courses classées pour toi`;
     sc.table.innerHTML = rows.map((r, i) => {
       const done = already(r);
-      return `<tr class="${i < 3 ? "is-target" : ""}"><td style="white-space:normal">${r.name.replace(/[<>&]/g, "")}${done ? `<br><span class="fine">Déjà couru : ${done.score} en ${done.date.y}</span>` : ""}${LENIENCY_NOTES[r.id] ? `<br><span class="fine">${LENIENCY_NOTES[r.id]}</span>` : ""}${r.extra ? `<br><span class="fine">ajoutée par toi</span>` : ""}</td><td>${r.terrain.group.label} · ${r.format.group.label.toLowerCase()}</td><td><strong>${Math.round(r.expected)}</strong><br><span class="fine">${level} ${part(r.terrain, r.terrain.group.label.toLowerCase())} ${part(r.format, r.format.group.label.toLowerCase())}</span></td><td>${formatMinutes(r.likely)}</td><td>${r.extra ? "" : `<button type="button" class="action" data-race="${r.id}">Préparer</button>`}</td></tr>`;
+      return `<tr class="${i < 3 ? "is-target" : ""}"><td style="white-space:normal">${r.name.replace(/[<>&]/g, "")}${done ? `<br><span class="fine">Déjà couru : ${done.score} en ${done.date.y}</span>` : ""}${LENIENCY_NOTES[r.id] ? `<br><span class="fine">${LENIENCY_NOTES[r.id]}</span>` : ""}${r.extra ? `<br><span class="fine">ajoutée par toi${r.forecast.noHistory ? ", chrono estimé sans historique (environ ±4 %)" : ""}</span>` : ""}</td><td>${r.terrain.group.label} · ${r.format.group.label.toLowerCase()}</td><td><strong>${Math.round(r.expected)}</strong><br><span class="fine">${level} ${part(r.terrain, r.terrain.group.label.toLowerCase())} ${part(r.format, r.format.group.label.toLowerCase())}</span></td><td>${formatMinutes(r.likely)}</td><td>${r.extra ? "" : `<button type="button" class="action" data-race="${r.id}">Préparer</button>`}</td></tr>`;
     }).join("");
     const best = rows[0];
     pf.advice.textContent = `${pf.advice.textContent ? pf.advice.textContent + " " : ""}Ta meilleure chance dans la liste : ${best.name} (score probable ${Math.round(best.expected)}).`;
@@ -1043,7 +995,7 @@
   els.score.addEventListener("change", render);
   els.score.addEventListener("input", () => { if (Number(els.score.value) >= 100) render(); });
   els.presets.addEventListener("click", e => { const b = e.target.closest("button"); if (b) { els.score.value = b.dataset.score; render(); } });
-  for (const el of [els.lastDist, els.lastGain, els.nextDist, els.nextGain, els.heat, els.knownTime, els.knownScore, els.start, els.checkpoints]) el.addEventListener("input", render);
+  for (const el of [els.lastDist, els.lastGain, els.nextDist, els.nextGain, els.knownTime, els.knownScore]) el.addEventListener("input", render);
   document.getElementById("form").addEventListener("submit", e => e.preventDefault());
 
   els.race.value = "vv52";
