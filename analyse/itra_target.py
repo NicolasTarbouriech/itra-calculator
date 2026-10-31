@@ -1,10 +1,11 @@
 import math
 from dataclasses import dataclass
 
-KM_EFFORT_EXPONENT = 1.27
+KM_EFFORT_EXPONENT = 1.0
 DRIFT_WHEN_UNCHANGED = -0.003
-BAND_WHEN_UNCHANGED = 0.012
-BAND_WHEN_CHANGED = 0.035
+DRIFT_WHEN_CHANGED = -0.005
+BAND_WHEN_UNCHANGED = 0.010
+BAND_WHEN_CHANGED = 0.025
 HEAT_SLOWDOWN_PER_DEGREE = 0.0054
 
 
@@ -35,7 +36,7 @@ def forecast_reference(last: Edition, distance_km: float, elevation_gain_m: floa
         band, method = BAND_WHEN_UNCHANGED, "parcours déclaré identique : T_ref reporté"
     else:
         ratio = (distance_km + elevation_gain_m / 100) / last.km_effort
-        expected = last.reference_time_s * ratio ** KM_EFFORT_EXPONENT
+        expected = last.reference_time_s * ratio ** KM_EFFORT_EXPONENT * (1 + DRIFT_WHEN_CHANGED)
         band, method = BAND_WHEN_CHANGED, "parcours modifié : T_ref recalculé, mis à l'échelle du km-effort"
     return ReferenceForecast(expected, expected * (1 - band), expected * (1 + band), method)
 

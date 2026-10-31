@@ -243,7 +243,7 @@ Pour les autres, Brocéliande est leur meilleur score, souvent de 10 à 40 point
 Modèle :
 
 - **Parcours déclaré identique** : T_ref = T_ref précédent × 0,997.
-- **Parcours modifié** : T_ref = T_ref précédent × (km-effort nouveau / ancien)^1,27.
+- **Parcours modifié** : T_ref = T_ref précédent × (km-effort nouveau / ancien) × 0,995. Jusqu'au 31/10, l'exposant était 1,27 (voir plus bas).
 - **Chrono maximum pour un score S** : 1000 × T_ref / S.
 
 Test sur les éditions consécutives connues :
@@ -254,6 +254,24 @@ Test sur les éditions consécutives connues :
 | Parcours modifié | 29 | 1,46 % | 3 sur 29 avec une marge de 3,3 % |
 
 Seule une erreur dans le sens « ITRA plus sévère » compte pour un chrono à viser : la marge de sécurité est donc unilatérale. Les plus grosses erreurs viennent des recalculs forts (OCC 2023 : −10,4 %, MCC 2023 : −8,8 %). Test sur la Boffi Fifty 2026 : prévu 3:30:09, réel 3:27:51.
+
+**D'où vient l'erreur sur un parcours modifié** (31/10, 25 paires d'éditions consécutives) : elle ne dépend pas de l'ampleur du changement. Écart-type de 3,9 % sous 3 % de variation de km-effort, 3,6 % au-delà ; le pire cas (OCC 2022 → 2023, −9,8 %) suit une modification de 4 m de D+. Dès qu'il recalcule, ITRA tire sa référence des résultats du jour, et c'est cette part, conditions et plateau, qui fait l'erreur ; un modèle plus fin du km et du D+ ne la réduirait pas. La marge est un choix de risque :
+
+| Marge | ITRA plus sévère que la marge |
+|---|---|
+| 1 % | 9 paires sur 25 |
+| 2 % | 5 sur 25 |
+| 3,3 % | 3 sur 25 |
+
+22 de ces 25 paires viennent de Chamonix, où ITRA recalcule le plus (pente 0,66 contre 0,05 sur les courses locales).
+
+**Hors Chamonix** (31/10) : 37 pages lues sur ITRA (Veni Vici et Majorque 2024, Festival des Templiers 2025 et 2026, à 10 s d'intervalle, sans blocage ; `donnees/hors_chamonix_2026-10-31.json`). Avec les courses locales déjà connues, 16 paires au parcours modifié et 6 au parcours identique. Script : `analyse/marge_hors_chamonix.py`.
+
+- **L'exposant 1,27 surestime l'effet d'un allongement.** Sur une même course, le T_ref suit le km-effort à peu près proportionnellement : exposant ajusté 0,93 (0,90 à 0,94 en validation croisée). Veni Vici 14 → 16 km : +25 % de km-effort, +23 % de T_ref ; Els Tres Mils 45,6 → 56 km : +16,5 % et +16,5 %. L'exposant 1,24-1,27 vaut entre courses de longueurs différentes d'un même événement, pas pour une même course modifiée.
+- **Modèle proportionnel** (exposant 1) : écart-type de l'erreur 1,6 % au lieu de 2,5 %, pire cas −4,0 % au lieu de −7,4 %, médiane −0,5 % (d'où le facteur 0,995). À Chamonix, il fait aussi bien que 1,27 (écart-type 4,3 % contre 4,2 %) : il s'applique partout.
+- **Report sans recalcul** : 6 des 16 paires ont gardé leur T_ref au centième près malgré le changement (Veni Vici 27, 47 → 48 et 82 km en 2025, Grand Trail des Templiers, Marathon du Larzac, Hospitaliers), alors que d'autres, à peine modifiées, ont été recalculées (Marathon des Causses : −0,4 % de km-effort, −3,7 % de T_ref). L'ampleur du changement ne dit pas lequel des deux arrivera.
+- **Marge** : avec le modèle proportionnel, ITRA a été plus sévère que la marge dans 2 paires sur 16 à 3 % (VO2 Trail 2026 −4,0 %, Marathon des Causses 2026 −3,3 %), 3 sur 16 à 2,5 %, 5 sur 16 à 2 %. La marge des parcours modifiés passe de 3,3 % à 3 % (0,5 % de dérive + 2,5 % de bande), pour la même sûreté qu'avant, environ 9 fois sur 10.
+- Parcours identique hors Chamonix : erreur médiane 0,27 %, 1 paire sur 6 au-delà de 1 % (Hérault Trail 2026, −1,9 %).
 
 **Sans historique** (nouvelle course ou course jamais saisie), on estime à partir du seul parcours, ajusté sur les 21 courses connues : **T_ref ≈ 68,05 s × km-effort^1,235**. Chaque événement a été testé sans avoir servi au calage. L'erreur médiane est de 4,4 % ; 80 % des cas sont sous 7,5 % et le pire atteint 9,5 %. Ajouter la pente ou séparer km et D+ n'améliore rien. Les plus gros écarts viennent de la technicité, que le parcours ne capture pas : la référence de la CCC est 7 % plus rapide que prévu, celles de l'Hérault Trail et de Majorque 6 à 7 % plus lentes. Pour Els Tres Mils (Majorque, 56 km), l'estimation sans historique donne 6h36 pour 600 points, contre 7h33 avec l'édition 2025 : 14 % d'écart. La marge de sécurité passe à 7 % (dépassée dans 3 cas sur 21). Le D− n'est pas modélisé : presque toutes les courses connues ont un D+ proche du D−, ce qui empêche de mesurer l'effet d'un parcours descendant.
 
