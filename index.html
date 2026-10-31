@@ -400,11 +400,6 @@
               <label for="sim-date">Date
                 <input id="sim-date" class="num" type="date">
               </label>
-              <label for="sim-score">Score de course espéré
-                <input id="sim-score" class="num" type="number" min="1" max="1000" step="1" inputmode="numeric">
-              </label>
-            </div>
-            <div class="row">
               <label for="pi-goal">Cote visée
                 <input id="pi-goal" class="num" type="number" min="100" max="1000" step="1" inputmode="numeric">
               </label>
@@ -429,7 +424,6 @@
             <span class="bib-score" id="pi-scenario"></span>
           </div>
           <div class="bib-alts">
-            <div><span class="k">Après ta course</span><span class="v" id="pi-after">–</span></div>
             <div><span class="k">Score mini pour monter</span><span class="v" id="pi-min">–</span></div>
           </div>
           <div class="bib-foot">
@@ -942,8 +936,8 @@
     ["2024-12-08", 380, "Trail de Villèle 25 km", 23, 800],
   ];
   const pe = {
-    results: $("results"), asOf: $("as-of"), simDate: $("sim-date"), simScore: $("sim-score"), goal: $("pi-goal"),
-    asOfText: $("pi-asof"), now: $("pi-now"), scenario: $("pi-scenario"), after: $("pi-after"), min: $("pi-min"),
+    results: $("results"), asOf: $("as-of"), simDate: $("sim-date"), goal: $("pi-goal"),
+    asOfText: $("pi-asof"), now: $("pi-now"), scenario: $("pi-scenario"), min: $("pi-min"),
     goalText: $("pi-goal-text"), goalUse: $("pi-goal-use"), used: $("pi-used"), drops: $("pi-drops"),
   };
 
@@ -992,15 +986,9 @@
       || `<tr><td colspan="4">Ajoute au moins un résultat.</td></tr>`;
 
     const raceDate = parseDay(pe.simDate.value);
-    const simScore = Number(pe.simScore.value);
     if (raceDate && !before(raceDate, asOf)) {
       const race = { date: raceDate, name: "Prochaine course" };
       const base = performanceIndex(results, raceDate).pi;
-      if (simScore > 0) {
-        const after = performanceIndex([...results, { ...race, score: simScore }], raceDate).pi;
-        const delta = after - base;
-        pe.after.innerHTML = `${after} <span class="${delta > 0 ? "delta-up" : delta < 0 ? "delta-down" : ""}">(${delta > 0 ? "+" : ""}${delta})</span>`;
-      } else pe.after.textContent = "–";
       const up = minScore(results, race, pi => pi > base);
       pe.min.textContent = up ? String(up) : "> 1000";
       const goal = Number(pe.goal.value);
@@ -1011,7 +999,7 @@
         else { pe.goalText.textContent = `Une seule course ne suffit pas pour atteindre ${goal} : il faudrait un score supérieur à 1000.`; pe.goalUse.hidden = true; }
       }
     } else {
-      pe.after.textContent = "–"; pe.min.textContent = "–";
+      pe.min.textContent = "–";
       pe.goalText.textContent = "Choisis une date de course postérieure au jour du calcul."; pe.goalUse.hidden = true;
     }
 
@@ -1197,9 +1185,8 @@
   pe.results.value = MY_RESULTS.map(([d, s, n, km, dp]) => `${d} ; ${s} ; ${n} ; ${km} ; ${dp}`).join("\n");
   pe.asOf.value = todayKey < "2026-10-30" ? "2026-10-30" : todayKey;
   pe.simDate.value = pe.asOf.value < "2026-11-07" ? "2026-11-07" : pe.asOf.value;
-  pe.simScore.value = 660;
   pe.goal.value = 670;
-  for (const el of [pe.results, pe.asOf, pe.simDate, pe.simScore, pe.goal]) el.addEventListener("input", renderCote);
+  for (const el of [pe.results, pe.asOf, pe.simDate, pe.goal]) el.addEventListener("input", renderCote);
   pe.goalUse.addEventListener("click", () => { els.score.value = pe.goalUse.dataset.score; showView("chrono"); render(); });
   for (const b of document.querySelectorAll(".tabs button")) b.addEventListener("click", () => showView(b.dataset.view));
   pf.edit.addEventListener("click", () => { showView("cote"); pe.results.focus(); });
