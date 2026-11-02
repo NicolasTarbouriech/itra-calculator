@@ -411,10 +411,11 @@
         <fieldset class="fs-pi-results">
           <legend><span class="step">2</span> Tes résultats</legend>
           <div class="group">
-            <label for="results">Un résultat par ligne : date ; score ; nom ; km ; D+ <span class="hint">AAAA-MM-JJ, abandons exclus ; km et D+ servent au profil coureur</span>
+            <p class="fine import-help">Copie-les depuis ITRA : dans ton espace coureur, onglet « Results », clique sur « Load More Results » jusqu'à remonter 3 ans, sélectionne la liste et colle-la ici. Seuls tes 5 meilleurs scores des 36 derniers mois comptent : mets-en 2 ou 3 de plus si certains approchent des 3 ans.</p>
+            <label for="results">Tes résultats <span class="hint">ou un par ligne : date ; score ; nom ; km ; D+</span>
               <textarea id="results" rows="12"></textarea>
             </label>
-            <span class="fine">Prérempli avec tes résultats ITRA au 30 octobre 2026, jour où ta cote publiée était 655.</span>
+            <span class="fine" id="results-status" aria-live="polite">Prérempli avec tes résultats ITRA au 30 octobre 2026, jour où ta cote publiée était 655.</span>
             <label for="as-of">Cote calculée au
               <input id="as-of" class="num" type="date">
             </label>
@@ -951,8 +952,9 @@
     ["2025-04-19", 544, "Trail du Capuchadou", 52, 1500], ["2025-02-08", 456, "Foulées Sclérose en plaques", 21, 910],
     ["2024-12-08", 380, "Trail de Villèle 25 km", 23, 800],
   ];
+  const DEFAULT_RESULTS = MY_RESULTS.map(([d, s, n, km, dp]) => `${d} ; ${s} ; ${n} ; ${km} ; ${dp}`).join("\n");
   const pe = {
-    results: $("results"), asOf: $("as-of"), simDate: $("sim-date"), goal: $("pi-goal"),
+    results: $("results"), resultsStatus: $("results-status"), asOf: $("as-of"), simDate: $("sim-date"), goal: $("pi-goal"),
     asOfText: $("pi-asof"), now: $("pi-now"), scenario: $("pi-scenario"), min: $("pi-min"),
     goalText: $("pi-goal-text"), goalUse: $("pi-goal-use"), used: $("pi-used"), need: $("pi-need"), presets: $("pi-presets"),
     waysBox: $("pi-ways-box"), waysCaption: $("pi-ways-caption"), ways: $("pi-ways"),
@@ -974,6 +976,39 @@
         km: km ? Number(km.replace(",", ".")) : null, dplus: dplus ? Number(dplus.replace(",", ".")) : null,
       }))
       .filter(r => r.date && Number.isFinite(r.score) && r.score > 0);
+  }
+
+  function parseItraCopy(text) {
+    const blocks = String(text || "").split(/^(?=\s*\d{4}-\d{2}-\d{2}\s*$)/m).filter(b => /^\s*\d{4}-\d{2}-\d{2}/.test(b));
+    let dropped = 0;
+    const results = blocks.map(block => {
+      const lines = block.split(/[\n\t]/).map(s => s.trim()).filter(Boolean);
+      const score = (block.match(/Race Score\s+(\d{1,4}|\S+)/i) || [])[1];
+      if (!/^\d+$/.test(score ?? "")) { dropped++; return null; }
+      const course = block.match(/(\d+(?:[.,]\d+)?)\s*km\s*\/\s*(\d+)\s*m\+/i);
+      const categoryAt = lines.findIndex(l => /^Category$/i.test(l));
+      return {
+        date: lines[0], score: Number(score), name: (categoryAt >= 0 ? lines[categoryAt + 2] ?? "" : "").replace(/;/g, ","),
+        km: course ? course[1].replace(",", ".") : "", dplus: course ? course[2] : "",
+      };
+    }).filter(Boolean);
+    return { results, dropped };
+  }
+
+  function importItraCopy(text) {
+    const { results, dropped } = parseItraCopy(text);
+    if (!results.length) {
+      pe.resultsStatus.textContent = "Aucun score trouvé dans ce collage : ITRA ne montre les scores qu'une fois connecté avec un abonnement.";
+      return;
+    }
+    const imported = results.map(r => [r.date, r.score, r.name, r.km, r.dplus].join(" ; "));
+    const kept = pe.results.value === DEFAULT_RESULTS ? [] : pe.results.value.split("\n").filter(l => l.trim());
+    const key = line => line.split(";").slice(0, 2).map(s => s.trim()).join("|");
+    pe.results.value = [...new Map([...kept, ...imported].map(line => [key(line), line])).values()].sort().reverse().join("\n");
+    const plural = n => (n > 1 ? "s" : "");
+    pe.resultsStatus.textContent = `${results.length} résultat${plural(results.length)} importé${plural(results.length)} depuis ITRA`
+      + (dropped ? `, ${dropped} sans score ignoré${plural(dropped)} (abandon ou score masqué).` : ".");
+    renderCote();
   }
 
   function performanceIndex(results, asOf) {
@@ -1200,7 +1235,13 @@
   }
 
   const todayKey = new Date().toISOString().slice(0, 10);
-  pe.results.value = MY_RESULTS.map(([d, s, n, km, dp]) => `${d} ; ${s} ; ${n} ; ${km} ; ${dp}`).join("\n");
+  pe.results.value = DEFAULT_RESULTS;
+  pe.results.addEventListener("paste", e => {
+    const text = e.clipboardData?.getData("text/plain") ?? "";
+    if (!/Race Score/i.test(text)) return;
+    e.preventDefault();
+    importItraCopy(text);
+  });
   pe.asOf.value = todayKey < "2026-10-30" ? "2026-10-30" : todayKey;
   pe.simDate.value = dayKey(addMonths(parseDay(pe.asOf.value), 1));
   pe.goal.value = 670;

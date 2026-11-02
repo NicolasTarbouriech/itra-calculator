@@ -19,10 +19,10 @@ global.document = {
 global.location = { hash: "" };
 
 vm.runInThisContext(`${script}
-global.page = { els, pe, pf, sc, renderCote, renderProfil, loadRace };
+global.page = { els, pe, pf, sc, renderCote, renderProfil, loadRace, importItraCopy };
 `);
 
-const { els, pe, pf, sc, renderCote, renderProfil, loadRace } = global.page;
+const { els, pe, pf, sc, renderCote, renderProfil, loadRace, importItraCopy } = global.page;
 const text = html => html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ");
 
 assert.equal(els.tSafe.textContent, "5h12", "Veni Vici 52 km, 600 points : chrono à viser");
@@ -48,5 +48,12 @@ assert.equal(text(pe.ways.innerHTML).trim(), "1 course 722 Chrono 2 courses 711 
 renderProfil();
 assert.equal(pf.headline.textContent, "Plus fort dès que ça grimpe");
 assert.match(text(sc.table.innerHTML), /Trail le Graal \(Brocéliande\) Déjà couru : 625 en 2026 .* 643 647 − 7 roulant \+ 3 court/);
+
+importItraCopy(fs.readFileSync(path.join(__dirname, "fixtures", "copie-resultats-itra.txt"), "utf8"));
+const imported = pe.results.value.split("\n");
+assert.equal(imported.length, 9, "copie de la page Results d'ITRA : 9 scores, l'abandon est écarté");
+assert.equal(imported[0], "2026-10-17 ; 629 ; Festival Des Templiers - Boffi Fifty ; 46 ; 1995");
+assert.match(pe.resultsStatus.textContent, /9 résultats importés depuis ITRA, 1 sans score ignoré/);
+assert.equal(String(pe.now.textContent), "655", "la cote recalculée à partir du collage reste celle publiée");
 
 console.log("Tous les calculs vérifiés.");
